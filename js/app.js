@@ -121,11 +121,12 @@ const App = {
             document.body.classList.remove('nav-topbar');
         }
         // Update both toggle button icons
-        const icon = mode === 'topbar' ? '📋' : '📐';
+        // In topbar mode: show ☰ to indicate "switch to sidebar"
+        // In sidebar mode: show ≡ to indicate "switch to topbar"
         const btn1 = document.getElementById('nav-mode-btn');
         const btn2 = document.getElementById('nav-mode-btn-top');
-        if (btn1) btn1.textContent = icon;
-        if (btn2) btn2.textContent = icon;
+        if (btn1) btn1.textContent = mode === 'topbar' ? '☰' : '≡';
+        if (btn2) btn2.textContent = mode === 'topbar' ? '☰' : '≡';
     },
 
     showLanguageSelector() {

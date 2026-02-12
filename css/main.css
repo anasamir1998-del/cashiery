@@ -2104,6 +2104,29 @@ body.nav-topbar .content-body {
     height: calc(100vh - 56px);
 }
 
+/* ── Nav Mode Toggle Button ── */
+.nav-mode-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--accent);
+    background: rgba(102, 126, 234, 0.15);
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.nav-mode-toggle-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.05);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MOBILE RESPONSIVE  (max-width: 768px)
    ═══════════════════════════════════════════════════════════════ */
