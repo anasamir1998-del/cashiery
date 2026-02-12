@@ -2011,14 +2011,18 @@ textarea.form-control {
         width: var(--sidebar-width);
         min-width: var(--sidebar-width);
         height: 100vh;
-        z-index: 9999;
-        /* Highest priority */
-        background: var(--bg-secondary);
-        /* More solid background */
-        backdrop-filter: none;
-        /* Disable blur to fix "faded" look on some mobile devices */
+        z-index: 10001 !important;
+        /* Extremely high priority */
+        background-color: #111638 !important;
+        /* Force solid dark color */
+        background: #111638 !important;
+        backdrop-filter: none !important;
+        /* Completely remove any blurring */
+        -webkit-backdrop-filter: none !important;
+        opacity: 1 !important;
+        /* Ensure no transparency */
         transition: transform var(--transition-slow);
-        box-shadow: var(--shadow-lg);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5) !important;
     }
 
     /* Directional positioning */
@@ -2046,11 +2050,11 @@ textarea.form-control {
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        /* Darker overlay */
-        backdrop-filter: blur(2px);
-        z-index: 9998;
-        /* Just below sidebar */
+        background: rgba(0, 0, 0, 0.8) !important;
+        backdrop-filter: none !important;
+        /* Remove blur from overlay too if it's annoying */
+        -webkit-backdrop-filter: none !important;
+        z-index: 10000 !important;
     }
 
     body.sidebar-open .sidebar-overlay {
