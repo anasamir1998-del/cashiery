@@ -59,6 +59,8 @@ const I18n = {
         view: { ar: 'عرض', en: 'View', ur: 'دیکھیں' },
         new_sale: { ar: 'بيع جديد', en: 'New Sale', ur: 'نئی فروخت' },
         toggle_sidebar: { ar: 'طي/فرد القائمة', en: 'Toggle Sidebar', ur: 'فہرست کو چھپائیں/دکھائیں' },
+        topbar_mode: { ar: 'تم التبديل إلى الشريط العلوي', en: 'Switched to Top Bar', ur: 'ٹاپ بار پر تبدیل ہو گیا' },
+        sidebar_mode: { ar: 'تم التبديل إلى القائمة الجانبية', en: 'Switched to Sidebar', ur: 'سائیڈ بار پر تبدیل ہو گیا' },
 
         // ── Toast & Status Messages ────────────────────
         success: { ar: 'تم', en: 'Done', ur: 'ہو گیا' },

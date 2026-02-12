@@ -136,6 +136,52 @@
             </div>
         </aside>
 
+        <!-- ═══════ TOP BAR (hidden by default) ═══════ -->
+        <nav class="topbar" id="topbar">
+            <div class="topbar-brand">
+                <div class="sidebar-logo" style="width:32px; height:32px; font-size:14px;">A</div>
+                <span class="topbar-brand-name">ARES</span>
+            </div>
+            <div class="topbar-nav" id="topbar-nav">
+                <a class="topbar-link active" data-screen="dashboard" onclick="App.navigate('dashboard')">
+                    <i>📊</i> <span data-i18n="dashboard">لوحة التحكم</span>
+                </a>
+                <a class="topbar-link" data-screen="pos" onclick="App.navigate('pos')">
+                    <i>🛒</i> <span data-i18n="pos">شاشة البيع</span>
+                </a>
+                <a class="topbar-link" data-screen="invoices" onclick="App.navigate('invoices')">
+                    <i>🧾</i> <span data-i18n="invoices">الفواتير</span>
+                </a>
+                <a class="topbar-link" data-screen="shifts" onclick="App.navigate('shifts')">
+                    <i>⏰</i> <span data-i18n="shifts">الورديات</span>
+                </a>
+                <a class="topbar-link" data-screen="products" onclick="App.navigate('products')">
+                    <i>📦</i> <span data-i18n="products">المنتجات</span>
+                </a>
+                <a class="topbar-link" data-screen="customers" onclick="App.navigate('customers')">
+                    <i>👥</i> <span data-i18n="customers">العملاء</span>
+                </a>
+                <a class="topbar-link" data-screen="reports" onclick="App.navigate('reports')">
+                    <i>📈</i> <span data-i18n="reports">التقارير</span>
+                </a>
+                <a class="topbar-link" data-screen="settings" onclick="App.navigate('settings')">
+                    <i>⚙️</i> <span data-i18n="settings">الإعدادات</span>
+                </a>
+            </div>
+            <div class="topbar-actions">
+                <button class="theme-toggle" onclick="App.showLanguageSelector()" title="تغيير اللغة"
+                    style="font-size:14px;">🌐</button>
+                <button class="theme-toggle" id="theme-toggle-btn-top" onclick="App.toggleTheme()"
+                    title="تبديل المظهر">☀️</button>
+                <button class="notification-bell" onclick="App.showNotifications()" title="التنبيهات"
+                    style="width:36px;height:36px;font-size:16px;">
+                    🔔<span class="badge-dot" id="notif-dot-top" style="display:none;"></span>
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="Auth.logout()" id="logout-btn-top"
+                    title="تسجيل الخروج">🚪</button>
+            </div>
+        </nav>
+
         <!-- Main Content -->
         <main class="main-content">
             <header class="content-header">
@@ -145,6 +191,9 @@
                 </div>
                 <div class="header-actions">
                     <span style="font-size: 13px; color: var(--text-muted);" id="header-date"></span>
+                    <!-- Nav Mode Toggle -->
+                    <button class="theme-toggle" onclick="App.toggleNavMode()" title="تبديل شكل القائمة"
+                        style="font-size: 16px;" id="nav-mode-btn">📐</button>
                     <!-- Language Selector -->
                     <button class="theme-toggle" onclick="App.showLanguageSelector()" title="تغيير اللغة"
                         style="font-size: 16px;">🌐</button>
@@ -163,6 +212,7 @@
                 <!-- Dynamic content loads here -->
             </div>
         </main>
+
     </div>
 
     <!-- ═══════════════════════════════════════════════════ -->

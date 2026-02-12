@@ -13,6 +13,9 @@ const App = {
         // Restore sidebar state
         this.loadSidebarState();
 
+        // Restore nav mode (sidebar or topbar)
+        this.loadNavMode();
+
         // Apply stored language to UI
         this.updateStaticUI();
 
@@ -94,6 +97,32 @@ const App = {
 
     closeSidebar() {
         document.body.classList.remove('sidebar-open');
+    },
+
+    /* ── Navigation Mode (Sidebar vs Topbar) ── */
+    loadNavMode() {
+        const mode = localStorage.getItem('ares_nav_mode') || 'sidebar';
+        this.setNavMode(mode);
+    },
+
+    toggleNavMode() {
+        const isTopbar = document.body.classList.contains('nav-topbar');
+        const newMode = isTopbar ? 'sidebar' : 'topbar';
+        this.setNavMode(newMode);
+        localStorage.setItem('ares_nav_mode', newMode);
+        this.playSound('click');
+        Toast.show(t('appearance'), newMode === 'topbar' ? `📐 ${t('topbar_mode')}` : `📋 ${t('sidebar_mode')}`, 'info', 2000);
+    },
+
+    setNavMode(mode) {
+        if (mode === 'topbar') {
+            document.body.classList.add('nav-topbar');
+        } else {
+            document.body.classList.remove('nav-topbar');
+        }
+        // Update the toggle button icon
+        const btn = document.getElementById('nav-mode-btn');
+        if (btn) btn.textContent = mode === 'topbar' ? '📋' : '📐';
     },
 
     showLanguageSelector() {
@@ -323,9 +352,14 @@ const App = {
             return;
         }
 
-        // Update active nav item
-        document.querySelectorAll('.nav-item').forEach(item => {
+        // Update active nav item (sidebar)
+        document.querySelectorAll('.sidebar .nav-item').forEach(item => {
             item.classList.toggle('active', item.dataset.screen === screen);
+        });
+
+        // Update active nav item (topbar)
+        document.querySelectorAll('.topbar-link').forEach(link => {
+            link.classList.toggle('active', link.dataset.screen === screen);
         });
 
         // Close sidebar on mobile after navigation

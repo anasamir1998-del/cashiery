@@ -1995,6 +1995,116 @@ textarea.form-control {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   TOP BAR NAVIGATION MODE
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Topbar is hidden by default */
+.topbar {
+    display: none;
+    width: 100%;
+    height: 56px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.topbar-brand-name {
+    font-size: 16px;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.topbar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.topbar-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+}
+
+.topbar-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-glass-hover);
+}
+
+.topbar-link.active {
+    color: white;
+    background: var(--accent-gradient);
+}
+
+.topbar-link i {
+    font-style: normal;
+    font-size: 14px;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ── When Topbar mode is active ── */
+body.nav-topbar #app {
+    flex-direction: column;
+}
+
+body.nav-topbar .topbar {
+    display: flex;
+}
+
+body.nav-topbar .sidebar,
+body.nav-topbar .sidebar-overlay,
+body.nav-topbar .sidebar-toggle-pin {
+    display: none !important;
+}
+
+body.nav-topbar .content-header {
+    display: none;
+}
+
+body.nav-topbar .main-content {
+    width: 100%;
+}
+
+body.nav-topbar .content-body {
+    height: calc(100vh - 56px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    MOBILE RESPONSIVE  (max-width: 768px)
    ═══════════════════════════════════════════════════════════════ */
 @media screen and (max-width: 768px) {
