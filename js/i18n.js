@@ -464,6 +464,41 @@ const I18n = {
         discount_applied: { ar: 'تم تطبيق الخصم', en: 'Discount applied', ur: 'ڈسکاؤنٹ لگا دیا گیا' },
         order_recalled: { ar: 'تم استرجاع الطلب', en: 'Order recalled', ur: 'آرڈر واپس آ گیا' },
         amount_required: { ar: 'المبلغ المطلوب', en: 'Amount Required', ur: 'مطلوبہ رقم' },
+
+        // ── Invoice Settings ───────────────────────────
+        invoice_settings: { ar: 'إعدادات الفاتورة', en: 'Invoice Settings', ur: 'انवॉइस سیٹنگز' },
+        invoice_format: { ar: 'تنسيق الفاتورة', en: 'Invoice Format', ur: 'انوائس فارمیٹ' },
+        invoice_appearance: { ar: 'مظهر الفاتورة', en: 'Invoice Appearance', ur: 'انوائس ظاہری شکل' },
+        inv_header: { ar: 'ترويسة الفاتورة', en: 'Invoice Header', ur: 'انوائس ہیڈر' },
+        inv_details: { ar: 'تفاصيل الفاتورة', en: 'Invoice Details', ur: 'انوائس کی تفصیلات' },
+        inv_footer: { ar: 'تذييل الفاتورة', en: 'Invoice Footer', ur: 'انوائس فوٹر' },
+        inv_layout: { ar: 'التخطيط والخطوط', en: 'Layout & Fonts', ur: 'تخطيط اور فونٹس' },
+
+        show_logo: { ar: 'إظهار الشعار', en: 'Show Logo', ur: 'لوگو دکھائیں' },
+        show_company_name: { ar: 'إظهار اسم المنشأة', en: 'Show Company Name', ur: 'کمپنی کا نام دکھائیں' },
+        show_company_address: { ar: 'إظهار العنوان', en: 'Show Address', ur: 'پتہ دکھائیں' },
+        show_company_phone: { ar: 'إظهار الهاتف', en: 'Show Phone', ur: 'فون نمبر دکھائیں' },
+        show_vat_number: { ar: 'إظهار الرقم الضريبي', en: 'Show VAT Number', ur: 'VAT نمبر دکھائیں' },
+
+        show_cashier: { ar: 'إظهار اسم الكاشير', en: 'Show Cashier Name', ur: 'کیشیئر کا نام دکھائیں' },
+        show_customer: { ar: 'إظهار اسم العميل', en: 'Show Customer Name', ur: 'کسٹمر کا نام دکھائیں' },
+        show_discount: { ar: 'إظهار الخصم', en: 'Show Discount', ur: 'ڈسکاؤنٹ دکھائیں' },
+        show_payment_method: { ar: 'إظهار طريقة الدفع', en: 'Show Payment Method', ur: 'ادائیگی کا طریقہ دکھائیں' },
+        show_paid_change: { ar: 'إظهار المدفوع والباقي', en: 'Show Paid & Change', ur: 'ادا شدہ اور بقایا دکھائیں' },
+
+        show_qr: { ar: 'إظهار رمز الاستجابة (QR)', en: 'Show QR Code', ur: 'QR کوڈ دکھائیں' },
+        qr_position: { ar: 'موقع الـ QR', en: 'QR Position', ur: 'QR کی پوزیشن' },
+        qr_top: { ar: 'أعلى الفاتورة (قبل الأصناف)', en: 'Top (Before Items)', ur: 'اوپر (اشیاء سے پہلے)' },
+        qr_bottom: { ar: 'أسفل الفاتورة (بعد الإجمالي)', en: 'Bottom (After Total)', ur: 'نیچے (کل کے بعد)' },
+
+        show_footer: { ar: 'إظهار التذييل', en: 'Show Footer', ur: 'فوٹر دکھائیں' },
+        footer_text: { ar: 'نص التذييل', en: 'Footer Text', ur: 'فوٹر کا متن' },
+        font_size: { ar: 'حجم الخط', en: 'Font Size', ur: 'فونٹ سائز' },
+        font_small: { ar: 'صغير', en: 'Small', ur: 'چھوٹا' },
+        font_medium: { ar: 'متوسط', en: 'Medium', ur: 'درمیانہ' },
+        font_large: { ar: 'كبير', en: 'Large', ur: 'بڑا' },
+        paper_width: { ar: 'عرض الورق', en: 'Paper Width', ur: 'کاغذ کی چوڑائی' },
+        inv_settings_saved: { ar: 'تم حفظ تنسيق الفاتورة', en: 'Invoice settings saved', ur: 'انوائس سیٹنگ محفوظ ہو گئیں' },
     },
 
     init() {

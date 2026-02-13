@@ -189,6 +189,154 @@ const Settings = {
         this.applyShopName();
     },
 
+    /* ── Invoice Settings ── */
+    renderInvoiceSettings() {
+        // Helper to get setting with default true
+        const getBool = (key) => db.getSetting(key, 'true') === 'true';
+        const getVal = (key, def) => db.getSetting(key, def);
+
+        return `
+            <div class="glass-card p-24">
+                <h3 style="margin-bottom: 20px;">🧾 ${t('invoice_settings')}</h3>
+                
+                <div class="grid-2">
+                    <!-- Header Section -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_header')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_logo" ${getBool('inv_show_logo') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_logo">${t('show_logo')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_company_name" ${getBool('inv_show_company_name') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_company_name">${t('show_company_name')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_company_address" ${getBool('inv_show_company_address') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_company_address">${t('show_company_address')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_company_phone" ${getBool('inv_show_company_phone') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_company_phone">${t('show_company_phone')}</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="inv_show_vat_number" ${getBool('inv_show_vat_number') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_vat_number">${t('show_vat_number')}</label>
+                        </div>
+                    </div>
+
+                    <!-- Details Section -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_details')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_cashier" ${getBool('inv_show_cashier') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_cashier">${t('show_cashier')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_customer" ${getBool('inv_show_customer') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_customer">${t('show_customer')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_discount" ${getBool('inv_show_discount') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_discount">${t('show_discount')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_payment_method" ${getBool('inv_show_payment_method') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_payment_method">${t('show_payment_method')}</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="inv_show_paid_change" ${getBool('inv_show_paid_change') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_paid_change">${t('show_paid_change')}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- QR Layout -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('show_qr')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_qr" ${getBool('inv_show_qr') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_qr">${t('show_qr')}</label>
+                        </div>
+                        
+                        <div class="form-group mt-10">
+                            <label>${t('qr_position')}</label>
+                            <select class="form-control" id="inv_qr_position">
+                                <option value="bottom" ${getVal('inv_qr_position', 'bottom') === 'bottom' ? 'selected' : ''}>${t('qr_bottom')}</option>
+                                <option value="top" ${getVal('inv_qr_position', 'bottom') === 'top' ? 'selected' : ''}>${t('qr_top')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Footer & Layout -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_footer')} & ${t('inv_layout')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_footer" ${getBool('inv_show_footer') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_footer">${t('show_footer')}</label>
+                        </div>
+                        
+                        <div class="form-group mb-10">
+                            <label>${t('footer_text')}</label>
+                            <input type="text" class="form-control" id="inv_footer_text" value="${getVal('inv_footer_text', t('thank_you') || 'Thank you')}">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>${t('font_size')}</label>
+                                <select class="form-control" id="inv_font_size">
+                                    <option value="small" ${getVal('inv_font_size', 'medium') === 'small' ? 'selected' : ''}>${t('font_small')}</option>
+                                    <option value="medium" ${getVal('inv_font_size', 'medium') === 'medium' ? 'selected' : ''}>${t('font_medium')}</option>
+                                    <option value="large" ${getVal('inv_font_size', 'medium') === 'large' ? 'selected' : ''}>${t('font_large')}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>${t('paper_width')}</label>
+                                <select class="form-control" id="inv_paper_width">
+                                    <option value="80mm" ${getVal('inv_paper_width', '80mm') === '80mm' ? 'selected' : ''}>80mm</option>
+                                    <option value="58mm" ${getVal('inv_paper_width', '80mm') === '58mm' ? 'selected' : ''}>58mm</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:end;">
+                    <button class="btn btn-primary" onclick="Settings.saveInvoiceSettings()">💾 ${t('save_changes')}</button>
+                </div>
+            </div>
+        `;
+    },
+
+    saveInvoiceSettings() {
+        // Bool settings
+        const boolKeys = [
+            'inv_show_logo', 'inv_show_company_name', 'inv_show_company_address',
+            'inv_show_company_phone', 'inv_show_vat_number', 'inv_show_cashier',
+            'inv_show_customer', 'inv_show_discount', 'inv_show_payment_method',
+            'inv_show_paid_change', 'inv_show_qr', 'inv_show_footer'
+        ];
+
+        boolKeys.forEach(key => {
+            const el = document.getElementById(key);
+            if (el) db.setSetting(key, el.checked.toString());
+        });
+
+        // Value settings
+        const valKeys = ['inv_qr_position', 'inv_footer_text', 'inv_font_size', 'inv_paper_width'];
+        valKeys.forEach(key => {
+            const el = document.getElementById(key);
+            if (el) db.setSetting(key, el.value);
+        });
+
+        Toast.show(t('success'), t('inv_settings_saved'), 'success');
+    },
+
     renderTaxSettings() {
         return `
             <div class="glass-card p-24">
@@ -421,8 +569,12 @@ const Settings = {
     /* ── Appearance Settings ── */
     renderAppearanceSettings() {
         const currentTheme = localStorage.getItem('ares_theme') || 'dark';
+        const getBool = (key) => db.getSetting(key, 'true') === 'true';
+        const getVal = (key, def) => db.getSetting(key, def);
+
         return `
-            <div class="glass-card p-24">
+            <!-- Theme Section -->
+            <div class="glass-card p-24 mb-20">
                 <h3 style="margin-bottom:20px;">🎨 ${t('appearance_settings')}</h3>
                 
                 <div class="grid-2 mb-20">
@@ -442,6 +594,122 @@ const Settings = {
 
                 <div class="glass-card p-20" style="background:var(--info-bg); border-color:rgba(0,180,216,0.2);">
                     <p style="font-size:12px; color:var(--info);">💡 ${t('theme_toggle_hint')}</p>
+                </div>
+            </div>
+
+            <!-- Invoice Appearance Section -->
+            <div class="glass-card p-24">
+                <h3 style="margin-bottom:20px;">🧾 ${t('invoice_appearance')}</h3>
+                
+                <div class="grid-2">
+                    <!-- Header Section -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_header')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_logo" ${getBool('inv_show_logo') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_logo">${t('show_logo')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_company_name" ${getBool('inv_show_company_name') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_company_name">${t('show_company_name')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_company_address" ${getBool('inv_show_company_address') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_company_address">${t('show_company_address')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_company_phone" ${getBool('inv_show_company_phone') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_company_phone">${t('show_company_phone')}</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="inv_show_vat_number" ${getBool('inv_show_vat_number') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_vat_number">${t('show_vat_number')}</label>
+                        </div>
+                    </div>
+
+                    <!-- Details Section -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_details')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_cashier" ${getBool('inv_show_cashier') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_cashier">${t('show_cashier')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_customer" ${getBool('inv_show_customer') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_customer">${t('show_customer')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_discount" ${getBool('inv_show_discount') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_discount">${t('show_discount')}</label>
+                        </div>
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_payment_method" ${getBool('inv_show_payment_method') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_payment_method">${t('show_payment_method')}</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="inv_show_paid_change" ${getBool('inv_show_paid_change') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_paid_change">${t('show_paid_change')}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- QR / Barcode Section -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">📱 ${t('show_qr')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_qr" ${getBool('inv_show_qr') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_qr">${t('show_qr')}</label>
+                        </div>
+                        
+                        <div class="form-group mt-10">
+                            <label>${t('qr_position')}</label>
+                            <select class="form-control" id="inv_qr_position">
+                                <option value="bottom" ${getVal('inv_qr_position', 'bottom') === 'bottom' ? 'selected' : ''}>${t('qr_bottom')}</option>
+                                <option value="top" ${getVal('inv_qr_position', 'bottom') === 'top' ? 'selected' : ''}>${t('qr_top')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Footer & Layout -->
+                    <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
+                        <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_footer')} & ${t('inv_layout')}</h4>
+                        
+                        <div class="form-check form-switch mb-10">
+                            <input class="form-check-input" type="checkbox" id="inv_show_footer" ${getBool('inv_show_footer') ? 'checked' : ''}>
+                            <label class="form-check-label" for="inv_show_footer">${t('show_footer')}</label>
+                        </div>
+                        
+                        <div class="form-group mb-10">
+                            <label>${t('footer_text')}</label>
+                            <input type="text" class="form-control" id="inv_footer_text" value="${getVal('inv_footer_text', t('thank_you') || 'Thank you')}">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>${t('font_size')}</label>
+                                <select class="form-control" id="inv_font_size">
+                                    <option value="small" ${getVal('inv_font_size', 'medium') === 'small' ? 'selected' : ''}>${t('font_small')}</option>
+                                    <option value="medium" ${getVal('inv_font_size', 'medium') === 'medium' ? 'selected' : ''}>${t('font_medium')}</option>
+                                    <option value="large" ${getVal('inv_font_size', 'medium') === 'large' ? 'selected' : ''}>${t('font_large')}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>${t('paper_width')}</label>
+                                <select class="form-control" id="inv_paper_width">
+                                    <option value="80mm" ${getVal('inv_paper_width', '80mm') === '80mm' ? 'selected' : ''}>80mm</option>
+                                    <option value="58mm" ${getVal('inv_paper_width', '80mm') === '58mm' ? 'selected' : ''}>58mm</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:end;">
+                    <button class="btn btn-primary" onclick="Settings.saveInvoiceSettings()">💾 ${t('save_changes')}</button>
                 </div>
             </div>
         `;
