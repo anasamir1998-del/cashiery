@@ -497,6 +497,7 @@ const I18n = {
         qr_align_left: { ar: 'يسار', en: 'Left', ur: 'بائیں' },
 
         show_footer: { ar: 'إظهار التذييل', en: 'Show Footer', ur: 'فوٹر دکھائیں' },
+        invoice_preview: { ar: 'معاينة الفاتورة', en: 'Invoice Preview', ur: 'انوائس پیش نظارہ' },
         footer_text: { ar: 'نص التذييل', en: 'Footer Text', ur: 'فوٹر کا متن' },
         font_size: { ar: 'حجم الخط', en: 'Font Size', ur: 'فونٹ سائز' },
         font_small: { ar: 'صغير', en: 'Small', ur: 'چھوٹا' },

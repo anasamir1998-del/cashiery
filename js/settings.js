@@ -89,7 +89,7 @@ const Settings = {
             case 'company': container.innerHTML = this.renderCompanySettings(); break;
             case 'tax': container.innerHTML = this.renderTaxSettings(); break;
             case 'users': container.innerHTML = this.renderUserManagement(); break;
-            case 'appearance': container.innerHTML = this.renderAppearanceSettings(); break;
+            case 'appearance': container.innerHTML = this.renderAppearanceSettings(); this.initInvoicePreviewListeners(); break;
             case 'shortcuts': container.innerHTML = this.renderShortcuts(); break;
             case 'backup': container.innerHTML = this.renderBackupSettings(); break;
         }
@@ -717,8 +717,16 @@ const Settings = {
                     </div>
                 </div>
 
-                <div style="text-align:end;">
+                <div style="display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-bottom:20px;">
                     <button class="btn btn-primary" onclick="Settings.saveInvoiceSettings()">💾 ${t('save_changes')}</button>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="glass-card p-20" style="border-color:var(--border-color);">
+                    <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">👁️ ${t('invoice_preview')}</h4>
+                    <div id="inv-preview-container" style="display:flex; justify-content:center;">
+                        <div id="inv-preview" style="background:#fff; color:#000; border:1px solid #ccc; border-radius:8px; padding:12px; max-width:300px; width:100%; font-family:'Courier New', monospace; font-size:12px; direction:rtl; text-align:right;"></div>
+                    </div>
                 </div>
             </div>
         `;
@@ -730,6 +738,136 @@ const Settings = {
         App.updateThemeIcon(theme);
         Toast.show(t('appearance'), theme === 'light' ? `☀️ ${t('light_mode_activated')}` : `🌙 ${t('dark_mode_activated')}`, 'info', 2000);
         document.getElementById('settings-content').innerHTML = this.renderAppearanceSettings();
+        this.initInvoicePreviewListeners();
+    },
+
+    /* ── Invoice Live Preview ── */
+    initInvoicePreviewListeners() {
+        // Attach onchange to all invoice setting elements
+        const ids = [
+            'inv_show_logo', 'inv_show_company_name', 'inv_show_company_address',
+            'inv_show_company_phone', 'inv_show_vat_number', 'inv_show_cashier',
+            'inv_show_customer', 'inv_show_discount', 'inv_show_payment_method',
+            'inv_show_paid_change', 'inv_show_qr', 'inv_show_footer',
+            'inv_qr_position', 'inv_qr_align', 'inv_font_size', 'inv_paper_width'
+        ];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => this.updateInvoicePreview());
+        });
+        // Footer text input
+        const footerEl = document.getElementById('inv_footer_text');
+        if (footerEl) footerEl.addEventListener('input', () => this.updateInvoicePreview());
+        // Initial render
+        this.updateInvoicePreview();
+    },
+
+    updateInvoicePreview() {
+        const container = document.getElementById('inv-preview');
+        if (!container) return;
+
+        // Read from form elements directly (not DB) so preview is live
+        const chk = (id) => { const el = document.getElementById(id); return el ? el.checked : true; };
+        const val = (id, def) => { const el = document.getElementById(id); return el ? el.value : def; };
+
+        const showLogo = chk('inv_show_logo');
+        const showName = chk('inv_show_company_name');
+        const showAddr = chk('inv_show_company_address');
+        const showPhone = chk('inv_show_company_phone');
+        const showVat = chk('inv_show_vat_number');
+        const showCashier = chk('inv_show_cashier');
+        const showCustomer = chk('inv_show_customer');
+        const showDiscount = chk('inv_show_discount');
+        const showPayment = chk('inv_show_payment_method');
+        const showPaidChange = chk('inv_show_paid_change');
+        const showQr = chk('inv_show_qr');
+        const showFooter = chk('inv_show_footer');
+        const qrPos = val('inv_qr_position', 'bottom');
+        const qrAlign = val('inv_qr_align', 'center');
+        const fontSize = val('inv_font_size', 'medium');
+        const paperWidth = val('inv_paper_width', '80mm');
+        const footerText = val('inv_footer_text', t('thank_you'));
+
+        // Company info from DB
+        const companyName = db.getSetting('company_name', 'ARES Casher Pro');
+        const companyNameEn = db.getSetting('company_name_en', '');
+        const companyAddress = db.getSetting('company_address', 'الرياض، المملكة العربية السعودية');
+        const companyPhone = db.getSetting('company_phone', '+966 50 000 0000');
+        const vatNumber = db.getSetting('vat_number', '300000000000003');
+        const logo = db.getSetting('company_logo', '');
+        const currency = db.getSetting('currency', 'ر.س');
+
+        const fs = fontSize === 'small' ? '10px' : fontSize === 'large' ? '14px' : '12px';
+        const pw = paperWidth === '58mm' ? '220px' : '300px';
+
+        const sep = '<hr style="border:none;border-top:1px dashed #999;margin:6px 0;">';
+        const qrBlock = showQr ? `<div style="text-align:${qrAlign};margin:6px 0;"><div style="display:inline-block;width:80px;height:80px;border:2px solid #333;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#666;">QR Code</div></div>` : '';
+
+        let html = `<div style="font-size:${fs};max-width:${pw};margin:0 auto;line-height:1.5;">`;
+
+        // Header
+        html += '<div style="text-align:center;">';
+        if (showLogo && logo) html += `<img src="${logo}" style="width:40px;height:40px;object-fit:contain;margin:0 auto 4px;display:block;border-radius:6px;">`;
+        if (showLogo && !logo) html += '<div style="width:40px;height:40px;background:#eee;border-radius:6px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:18px;">🏢</div>';
+        if (showName) html += `<div style="font-weight:800;font-size:1.1em;">${Utils.escapeHTML(companyName)}</div>`;
+        if (showName && companyNameEn) html += `<div style="font-size:0.85em;color:#666;">${Utils.escapeHTML(companyNameEn)}</div>`;
+        if (showAddr && companyAddress) html += `<div style="font-size:0.85em;color:#555;">${Utils.escapeHTML(companyAddress)}</div>`;
+        if (showPhone && companyPhone) html += `<div style="font-size:0.85em;color:#555;">📞 ${companyPhone}</div>`;
+        if (showVat && vatNumber) html += `<div style="font-size:0.85em;color:#555;">${t('vat_number')}: ${vatNumber}</div>`;
+        html += '</div>';
+
+        html += sep;
+        html += `<div style="text-align:center;font-weight:700;">${t('simplified_tax_invoice') || 'فاتورة ضريبية مبسطة'}</div>`;
+        html += sep;
+
+        // Invoice info
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('invoice_number')}:</span><span style="font-weight:700;">INV-001</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('date')}:</span><span>2026/02/14 12:00</span></div>`;
+        if (showCashier) html += `<div style="display:flex;justify-content:space-between;"><span>${t('cashier')}:</span><span>أحمد</span></div>`;
+        if (showCustomer) html += `<div style="display:flex;justify-content:space-between;"><span>${t('customer')}:</span><span>عميل عام</span></div>`;
+
+        // QR Top
+        if (qrPos === 'top') html += qrBlock;
+
+        html += sep;
+
+        // Items
+        html += `<div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;">
+            <span style="width:40%;">${t('product') || 'المنتج'}</span>
+            <span style="width:15%;text-align:center;">${t('qty') || 'الكمية'}</span>
+            <span style="width:20%;text-align:left;">${t('price') || 'السعر'}</span>
+            <span style="width:25%;text-align:left;">${t('total') || 'الإجمالي'}</span>
+        </div>`;
+        html += `<div style="display:flex;justify-content:space-between;font-size:0.9em;"><span style="width:40%;">قهوة عربية</span><span style="width:15%;text-align:center;">2</span><span style="width:20%;text-align:left;">15.00</span><span style="width:25%;text-align:left;font-weight:700;">30.00</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;font-size:0.9em;"><span style="width:40%;">كيك شوكولاتة</span><span style="width:15%;text-align:center;">1</span><span style="width:20%;text-align:left;">25.00</span><span style="width:25%;text-align:left;font-weight:700;">25.00</span></div>`;
+
+        html += sep;
+
+        // Totals
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('subtotal')}:</span><span>55.00 ${currency}</span></div>`;
+        if (showDiscount) html += `<div style="display:flex;justify-content:space-between;color:#c00;"><span>${t('discount')}:</span><span>-5.00 ${currency}</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('vat')} (15%):</span><span>7.50 ${currency}</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.2em;border-top:2px solid #000;padding-top:4px;margin-top:4px;"><span>${t('grand_total')}:</span><span>57.50 ${currency}</span></div>`;
+
+        if (showPayment) html += `<div style="display:flex;justify-content:space-between;margin-top:4px;"><span>${t('payment_method')}:</span><span>${t('cash_sales') || 'نقدي'}</span></div>`;
+        if (showPaidChange) {
+            html += `<div style="display:flex;justify-content:space-between;"><span>${t('amount_paid') || 'المبلغ المدفوع'}:</span><span>60.00 ${currency}</span></div>`;
+            html += `<div style="display:flex;justify-content:space-between;"><span>${t('change') || 'الباقي'}:</span><span>2.50 ${currency}</span></div>`;
+        }
+
+        // QR Bottom
+        if (qrPos === 'bottom') html += qrBlock;
+
+        // Footer
+        if (showFooter) {
+            html += sep;
+            html += `<div style="text-align:center;font-size:0.9em;color:#555;">${Utils.escapeHTML(footerText)}</div>`;
+            html += '<div style="text-align:center;font-size:0.8em;color:#999;margin-top:2px;">ARES Casher Pro</div>';
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+        container.style.maxWidth = pw;
     },
 
     /* ── Keyboard Shortcuts ── */
