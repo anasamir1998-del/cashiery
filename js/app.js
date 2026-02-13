@@ -16,11 +16,6 @@ const App = {
         // Restore nav mode (sidebar or topbar)
         this.loadNavMode();
 
-        // Apply shop name/branding
-        if (window.Settings && Settings.applyShopName) {
-            Settings.applyShopName();
-        }
-
         // Apply stored language to UI
         this.updateStaticUI();
 
@@ -33,6 +28,22 @@ const App = {
         }
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleShortcuts(e));
+
+        // Apply shop name/branding LAST — after all UI is set up
+        this.applyBranding();
+    },
+
+    /* ── Apply Branding (name + logo everywhere) ── */
+    applyBranding() {
+        if (window.Settings && Settings.applyShopName) {
+            Settings.applyShopName();
+        }
+        // Also apply after a short delay to catch any async renders
+        setTimeout(() => {
+            if (window.Settings && Settings.applyShopName) {
+                Settings.applyShopName();
+            }
+        }, 100);
     },
 
     /* ── Theme Management ── */
@@ -262,6 +273,9 @@ const App = {
             Toast.show(t('login_welcome'), `${t('login_hello')} ${user.name}! ${t('login_success')}`, 'success');
         }
         this.navigate('dashboard');
+
+        // Re-apply branding after login (ensures sidebar/topbar are updated)
+        this.applyBranding();
     },
 
     setupSidebar() {
