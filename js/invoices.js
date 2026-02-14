@@ -23,7 +23,7 @@ const Invoices = {
                 <!-- Search & Filter -->
                 <div class="flex gap-12 mb-20">
                     <input type="text" class="form-control" style="flex:1;" placeholder="🔍 ${t('search_invoice')}" oninput="Invoices.filter(this.value)" id="inv-search">
-                    <input type="date" class="form-control" style="width:180px;" onchange="Invoices.filterByDate(this.value)" id="inv-date">
+                    <input type="text" class="form-control" style="width:180px; background-color:var(--element-bg);" placeholder="📅 ${t('date')}" id="inv-date">
                 </div>
 
                 <div class="glass-card" style="overflow:hidden;">
@@ -49,6 +49,20 @@ const Invoices = {
                 </div>
             </div>
         `;
+
+        // Initialize Flatpickr
+        setTimeout(() => {
+            if (typeof flatpickr !== 'undefined') {
+                flatpickr("#inv-date", {
+                    locale: I18n.currentLang === 'ar' ? 'ar' : 'default',
+                    dateFormat: "Y-m-d",
+                    theme: "dark",
+                    onChange: function (selectedDates, dateStr, instance) {
+                        Invoices.filterByDate(dateStr);
+                    }
+                });
+            }
+        }, 50);
     },
 
     renderRows(sales) {
