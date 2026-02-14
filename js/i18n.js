@@ -505,6 +505,28 @@ const I18n = {
         font_large: { ar: 'كبير', en: 'Large', ur: 'بڑا' },
         paper_width: { ar: 'عرض الورق', en: 'Paper Width', ur: 'کاغذ کی چوڑائی' },
         inv_settings_saved: { ar: 'تم حفظ تنسيق الفاتورة', en: 'Invoice settings saved', ur: 'انوائس سیٹنگ محفوظ ہو گئیں' },
+
+        /* ── Purchases Module ── */
+        purchases: { ar: 'المشتريات', en: 'Purchases', ur: 'خریداری' },
+        suppliers: { ar: 'الموردين', en: 'Suppliers', ur: 'سپلائرز' },
+        new_purchase: { ar: 'شراء جديد', en: 'New Purchase', ur: 'نئی خریداری' },
+        purchase_history: { ar: 'سجل المشتريات', en: 'Purchase History', ur: 'خریداری کی تاریخ' },
+
+        supplier_name: { ar: 'اسم المورد', en: 'Supplier Name', ur: 'سپلائر کا نام' },
+        company: { ar: 'الشركة', en: 'Company', ur: 'کمپنی' },
+        add_supplier: { ar: 'إضافة مورد', en: 'Add Supplier', ur: 'سپلائر شامل کریں' },
+        edit_supplier: { ar: 'تعديل مورد', en: 'Edit Supplier', ur: 'سپلائر میں ترمیم کریں' },
+        delete_supplier: { ar: 'حذف مورد', en: 'Delete Supplier', ur: 'سپلائر کو حذف کریں' },
+        no_suppliers: { ar: 'لا يوجد موردين', en: 'No suppliers found', ur: 'کوئی سپلائر نہیں ملا' },
+        supplier_saved: { ar: 'تم حفظ المورد بنجاح', en: 'Supplier saved successfully', ur: 'سپلائر کامیابی سے محفوظ ہو گیا' },
+
+        select_supplier: { ar: 'اختر المورد', en: 'Select Supplier', ur: 'سپلائر منتخب کریں' },
+        cost_price: { ar: 'سعر التكلفة', en: 'Cost Price', ur: 'لاگت کی قیمت' },
+        stock_in: { ar: 'إدخال مخزون', en: 'Stock In', ur: 'اسٹاک میں شامل کریں' },
+        purchase_saved: { ar: 'تم حفظ فاتورة الشراء وزيادة المخزون', en: 'Purchase saved & stock updated', ur: 'خریداری محفوظ ہو گئی اور اسٹاک اپ ڈیٹ ہو گیا' },
+        invoice_date: { ar: 'تاريخ الفاتورة', en: 'Invoice Date', ur: 'انوائس کی تاریخ' },
+        items_count: { ar: 'عدد الأصناف', en: 'Items Count', ur: 'اشیاء کی تعداد' },
+        total_cost: { ar: 'إجمالي التكلفة', en: 'Total Cost', ur: 'کل لاگت' },
     },
 
     init() {

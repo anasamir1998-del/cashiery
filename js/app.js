@@ -296,7 +296,8 @@ const App = {
         const user = Auth.currentUser;
 
         if (Auth.hasPermission('manage_products') || Auth.hasPermission('manage_customers') ||
-            Auth.hasPermission('view_reports') || Auth.hasPermission('manage_settings')) {
+            Auth.hasPermission('view_reports') || Auth.hasPermission('manage_settings') ||
+            Auth.hasPermission('manage_purchases')) {
             adminNav.style.display = 'block';
 
             // Hide individual items based on permissions
@@ -307,7 +308,8 @@ const App = {
                     products: 'manage_products',
                     customers: 'manage_customers',
                     reports: 'view_reports',
-                    settings: 'manage_settings'
+                    settings: 'manage_settings',
+                    purchases: 'manage_purchases'
                 };
                 if (permMap[screen] && !Auth.hasPermission(permMap[screen])) {
                     item.style.display = 'none';
@@ -381,7 +383,8 @@ const App = {
             products: 'manage_products',
             customers: 'manage_customers',
             reports: 'view_reports',
-            settings: 'manage_settings'
+            settings: 'manage_settings',
+            purchases: 'manage_purchases'
         };
         if (permMap[screen] && !Auth.hasPermission(permMap[screen])) {
             Toast.show(t('not_allowed'), t('no_permission'), 'error');
@@ -415,7 +418,8 @@ const App = {
             invoices: { title: t('invoices'), icon: '🧾', render: () => Invoices.render() },
             reports: { title: t('reports'), icon: '📈', render: () => Reports.render() },
             shifts: { title: t('shifts'), icon: '⏰', render: () => Shifts.render() },
-            settings: { title: t('settings'), icon: '⚙️', render: () => Settings.render() }
+            settings: { title: t('settings'), icon: '⚙️', render: () => Settings.render() },
+            purchases: { title: t('purchases'), icon: '🚚', render: () => Purchases.render() }
         };
 
         const s = screens[screen];
