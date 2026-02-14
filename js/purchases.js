@@ -151,6 +151,7 @@ const Purchases = {
             <div class="grid-layout" style="grid-template-columns: 1fr 350px; gap:24px;">
                 <!-- Left: Product Selection -->
                 <div class="glass-card p-24">
+                    ${this.editingPurchaseId ? `<div class="mb-20 p-24" style="background:#5e3a00; border-radius:8px; border:1px solid #ffd700;">⚠️ ${t('edit_mode_active')}</div>` : ''}
                     <div class="grid-2 mb-20">
                         <div class="form-group">
                             <label>${t('select_supplier')}</label>
@@ -348,18 +349,17 @@ const Purchases = {
         if (this.editingPurchaseId) {
             // Update existing record
             db.update('purchases', this.editingPurchaseId, purchase);
+            Toast.show(t('success'), t('updated_successfully') || 'Updated Successfully', 'success');
         } else {
             // Insert new record
             db.insert('purchases', purchase);
+            Toast.show(t('success'), t('purchase_saved'), 'success');
         }
 
         // 2. Update Stock & Cost Price
         this.cart.forEach(item => {
             const product = db.getById('products', item.productId);
             if (product) {
-                // Weighted Average Cost (optional, but good practice)
-                // New Cost = ((Old Qty * Old Cost) + (New Qty * New Cost)) / (Old Qty + New Qty)
-
                 // Simple Stock Increment
                 const currentStock = parseFloat(product.stock || 0);
                 const newStock = currentStock + item.qty;
@@ -372,11 +372,8 @@ const Purchases = {
             }
         });
 
-        Toast.show(t('success'), t('purchase_saved'), 'success');
         this.switchTab(document.querySelectorAll('.tab-btn')[0], 'history');
         this.editingPurchaseId = null;
-        Toast.show(t('success'), t('purchase_saved'), 'success');
-        this.switchTab(document.querySelectorAll('.tab-btn')[0], 'history');
     },
 
     deletePurchase(id) {
