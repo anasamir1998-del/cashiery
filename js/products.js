@@ -32,7 +32,7 @@ const Products = {
                     </div>
                     <div class="flex gap-8">
                         <button class="btn btn-ghost" onclick="Products.manageCategories()">📂 ${t('categories')}</button>
-                        <button class="btn btn-primary" onclick="Products.showForm()">➕ ${t('add_product')}</button>
+                        ${Auth.hasPermission('manage_products') ? `<button class="btn btn-primary" onclick="Products.showForm()">➕ ${t('add_product')}</button>` : ''}
                     </div>
                 </div>
 
@@ -83,7 +83,7 @@ const Products = {
                     </div>
                 </td>
                 <td>
-                    <strong>${Utils.escapeHTML(p.name)}</strong>
+                    <strong>${Utils.escapeHTML(Utils.getName(p))}</strong>
                     ${isService ? `<span class="badge badge-info" style="font-size:10px; margin-right:4px;">${t('type_service')}</span>` : ''}
                 </td>
                 <td>${cat ? `<span class="badge" style="background:${cat.color}22; color:${cat.color};">${cat.icon || ''} ${cat.name}</span>` : '—'}</td>
@@ -97,8 +97,11 @@ const Products = {
                     <span class="badge ${p.active !== false ? 'badge-success' : 'badge-danger'}">${p.active !== false ? t('active') : t('disabled')}</span>
                 </td>
                 <td>
+                <td>
+                    ${Auth.hasPermission('manage_products') ? `
                     <button class="btn btn-ghost btn-sm" onclick="Products.showForm('${p.id}')">✏️</button>
                     <button class="btn btn-ghost btn-sm" onclick="Products.deleteProduct('${p.id}')">🗑️</button>
+                    ` : '<span style="color:var(--text-muted); font-size:12px;">🔒</span>'}
                 </td>
             </tr>`;
         }).join('');
@@ -134,19 +137,41 @@ const Products = {
             <div class="flex gap-20 mb-20">
                 <!-- Image Upload Area -->
                 <div style="text-align:center;">
-                    <div class="image-upload-area" id="product-image-area" onclick="Products.chooseImage()" title="${t('click_to_upload')}">
+                    <div class="image-upload-area" id="product-image-area" 
+                         onclick="document.getElementById('product-image-input').click()" 
+                         ondrop="Products.handleDrop(event)" 
+                         ondragover="event.preventDefault();"
+                         title="${t('click_to_upload')}">
                         ${currentDisplay}
+                        ${product?.image ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); Products.removeImage();" style="position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); padding:2px 8px; font-size:10px;">🗑️ ${t('remove')}</button>` : ''}
                     </div>
                     <input type="file" id="product-image-input" accept="image/*" onchange="Products.handleImageUpload(event)" style="display:none;">
-                    <div style="margin-top:6px;">
-                        <button class="btn btn-ghost btn-sm" onclick="Products.showEmojiPicker()" style="font-size:12px;">😀 ${t('choose_icon')}</button>
+                    
+                    <div class="flex gap-4 justify-center mt-8">
+                        <button class="btn btn-ghost btn-sm" onclick="Products.showEmojiPicker()" style="font-size:12px;">😀 ${t('icon')}</button>
+                        <button class="btn btn-ghost btn-sm" onclick="Products.showUrlInput()" style="font-size:12px;">🔗 URL</button>
+                    </div>
+                    
+                    <div id="url-input-container" style="display:none; margin-top:8px;">
+                        <input type="text" class="form-control" id="img-url-input" placeholder="https://" style="font-size:12px; padding:4px;">
+                        <button class="btn btn-primary btn-sm" onclick="Products.handleUrlInput()" style="width:100%; margin-top:4px;">${t('ok')}</button>
                     </div>
                 </div>
 
                 <div style="flex:1;">
-                    <div class="form-group">
-                        <label>${t('product_name')} *</label>
-                        <input type="text" class="form-control" id="p-name" value="${product ? Utils.escapeHTML(product.name) : ''}">
+                    <div class="form-group mb-12">
+                        <label>${t('product_name')} (${t('name_ar')}) *</label>
+                        <input type="text" class="form-control" id="p-name-ar" value="${product?.nameAr || product?.name || ''}" placeholder="${t('name_ar')}">
+                    </div>
+                    <div class="grid-2 mb-12">
+                        <div class="form-group">
+                            <label>${t('name_en')}</label>
+                            <input type="text" class="form-control" id="p-name-en" value="${product?.nameEn || ''}" placeholder="${t('name_en')}" style="direction:ltr;">
+                        </div>
+                        <div class="form-group">
+                            <label>${t('name_ur')}</label>
+                            <input type="text" class="form-control" id="p-name-ur" value="${product?.nameUr || ''}" placeholder="${t('name_ur')}">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>${t('product_type')}</label>
@@ -240,22 +265,69 @@ const Products = {
     handleImageUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
+        this.processImageFile(file);
+    },
 
-        // Size check (max 500KB for localStorage)
-        if (file.size > 512000) {
+    processImageFile(file) {
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit before compression
             Toast.show(t('warning'), t('image_too_large'), 'warning');
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            this.selectedImage = e.target.result;
-            this.selectedEmoji = null;
-            const area = document.getElementById('product-image-area');
-            area.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
-            Toast.show(t('success'), t('image_uploaded'), 'success', 2000);
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const compressed = Utils.compressImage(img);
+                this.setImage(compressed);
+                Toast.show(t('success'), t('image_uploaded'), 'success');
+            };
         };
         reader.readAsDataURL(file);
+    },
+
+    setImage(dataUrl) {
+        this.selectedImage = dataUrl;
+        this.selectedEmoji = null;
+        const area = document.getElementById('product-image-area');
+        area.innerHTML = `
+            <img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); Products.removeImage();" style="position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); padding:2px 8px; font-size:10px;">🗑️ ${t('remove')}</button>
+        `;
+        area.style.border = 'none';
+    },
+
+    removeImage() {
+        this.selectedImage = null;
+        const area = document.getElementById('product-image-area');
+        area.innerHTML = `<span class="upload-icon">📷</span><span class="upload-text">${t('upload_image')}</span>`;
+        area.style.border = '2px dashed var(--border-color)';
+        event.stopPropagation();
+    },
+
+    handleUrlInput() {
+        const url = document.getElementById('img-url-input').value.trim();
+        if (url) {
+            this.setImage(url);
+            Modal.hide('url-modal'); // Assuming a mini modal or just simple input
+        }
+    },
+
+    showUrlInput() {
+        const div = document.getElementById('url-input-container');
+        div.style.display = div.style.display === 'none' ? 'block' : 'none';
+        if (div.style.display === 'block') {
+            setTimeout(() => document.getElementById('img-url-input').focus(), 100);
+        }
+    },
+
+    handleDrop(event) {
+        event.preventDefault();
+        const file = event.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            this.processImageFile(file);
+        }
     },
 
     showEmojiPicker() {
@@ -279,7 +351,12 @@ const Products = {
 
     save(id) {
         const type = document.getElementById('p-type').value;
-        const name = document.getElementById('p-name').value.trim();
+        const nameAr = document.getElementById('p-name-ar').value.trim();
+        const nameEn = document.getElementById('p-name-en').value.trim();
+        const nameUr = document.getElementById('p-name-ur').value.trim();
+        // Use Arabic name as default/fallback 'name'
+        const name = nameAr;
+
         const price = parseFloat(document.getElementById('p-price').value);
         const categoryId = document.getElementById('p-category').value;
         const stock = document.getElementById('p-stock').value ? parseInt(document.getElementById('p-stock').value) : 0;
@@ -295,7 +372,8 @@ const Products = {
         }
 
         const productData = {
-            name, price, categoryId: categoryId || null, type,
+            name, nameAr, nameEn, nameUr,
+            price, categoryId: categoryId || null, type,
             stock: type === 'service' ? 0 : stock,
             minStock: type === 'service' ? 0 : minStock,
             barcode, active, showInPos, notes,
@@ -339,11 +417,12 @@ const Products = {
                 ${categories.map(c => `
                     <div class="flex items-center justify-between" style="padding:10px 12px; margin-bottom:6px; background:var(--bg-glass); border-radius:var(--radius-sm); border-${I18n.isRTL() ? 'right' : 'left'}:3px solid ${c.color || 'var(--accent-start)'};">
                         <span>${c.icon || '📂'} ${Utils.escapeHTML(c.name)}</span>
-                        <button class="btn btn-ghost btn-sm" onclick="Products.deleteCategory('${c.id}')">🗑️</button>
+                        ${Auth.hasPermission('manage_products') ? `<button class="btn btn-ghost btn-sm" onclick="Products.deleteCategory('${c.id}')">🗑️</button>` : ''}
                     </div>
                 `).join('')}
             </div>
             <hr style="border-color:var(--border-color); margin:16px 0;">
+            ${Auth.hasPermission('manage_products') ? `
             <h4 style="margin-bottom:12px;">➕ ${t('add_category')}</h4>
             <div class="grid-3" style="gap:10px;">
                 <div class="form-group">
@@ -356,8 +435,9 @@ const Products = {
                     <input type="color" class="form-control" id="cat-color" value="#667eea" style="height:42px; padding:4px;">
                 </div>
             </div>
+            ` : ''}
         `, `
-            <button class="btn btn-primary" onclick="Products.addCategory()">${t('add')}</button>
+            ${Auth.hasPermission('manage_products') ? `<button class="btn btn-primary" onclick="Products.addCategory()">${t('add')}</button>` : ''}
             <button class="btn btn-ghost" onclick="Modal.hide()">${t('close')}</button>
         `);
     },

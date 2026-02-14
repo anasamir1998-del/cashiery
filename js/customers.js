@@ -11,7 +11,7 @@ const Customers = {
             <div class="stagger-in">
                 <div class="flex items-center justify-between mb-24">
                     <input type="text" class="form-control" id="customer-search" placeholder="🔍 ${t('search_customer')}" style="width:300px;" oninput="Customers.filterList()">
-                    <button class="btn btn-primary" onclick="Customers.showForm()">➕ ${t('add_customer')}</button>
+                    ${Auth.hasPermission('manage_customers') ? `<button class="btn btn-primary" onclick="Customers.showForm()">➕ ${t('add_customer')}</button>` : ''}
                 </div>
 
                 <div class="glass-card" style="overflow: hidden;">
@@ -37,8 +37,11 @@ const Customers = {
                                     <td style="font-family:Inter;">${c.vatNumber || '—'}</td>
                                     <td><span class="badge badge-accent">${purchases}</span></td>
                                     <td>
+                                    <td>
+                                        ${Auth.hasPermission('manage_customers') ? `
                                         <button class="btn btn-ghost btn-sm" onclick="Customers.editCustomer('${c.id}')">✏️</button>
                                         <button class="btn btn-ghost btn-sm" onclick="Customers.deleteCustomer('${c.id}')">🗑️</button>
+                                        ` : '<span style="color:var(--text-muted);">🔒</span>'}
                                     </td>
                                 </tr>`;
         }).join('')}

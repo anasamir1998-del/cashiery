@@ -55,7 +55,7 @@ const Receipt = {
             const total = (price * qty).toFixed(2);
             return `
             <tr>
-                <td style="text-align:start;">${Utils.escapeHTML(item.name)}</td>
+                <td style="text-align:start;">${Utils.escapeHTML(Utils.getName(db.getById('products', item.productId)) || item.name)}</td>
                 <td style="text-align:center;">${qty}</td>
                 <td style="text-align:end;">${price.toFixed(2)}</td>
                 <td style="text-align:end;">${total}</td>

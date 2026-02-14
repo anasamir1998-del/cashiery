@@ -8,6 +8,16 @@ const Utils = {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     },
 
+    // Get localized name
+    getName(product) {
+        if (!product) return '';
+        const lang = (typeof I18n !== 'undefined') ? I18n.currentLang : 'ar';
+        if (lang === 'en' && product.nameEn) return product.nameEn;
+        if (lang === 'ur' && product.nameUr) return product.nameUr;
+        if (lang === 'ar' && product.nameAr) return product.nameAr;
+        return product.name; // Fallback to default name
+    },
+
     // Format currency (SAR)
     formatCurrency(amount) {
         return new Intl.NumberFormat('ar-SA', {
@@ -163,6 +173,24 @@ const Utils = {
             printWindow.print();
             printWindow.close();
         }, 500);
+    },
+
+    // Compress Image (Canvas)
+    compressImage(img, quality = 0.7, maxWidth = 800) {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        return canvas.toDataURL('image/jpeg', quality);
     },
 
     // Export JSON data

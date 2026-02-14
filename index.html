@@ -12,6 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap"
         rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
 
     <!-- QR Code Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -297,64 +298,82 @@
                 if (!raw) return;
                 var settings = JSON.parse(raw);
                 if (!settings || !Array.isArray(settings)) return;
-
-                function getSetting(key, def) {
-                    var s = settings.find(function (item) { return item.key === key; });
-                    return s ? s.value : def;
-                }
-
-                var name = getSetting('company_name', '');
-                var nameEn = getSetting('company_name_en', '');
-                var logo = getSetting('company_logo', '');
-
-                if (!name && !nameEn && !logo) return; // nothing custom saved
-
-                // Apply to all brand text elements
-                var loginBrand = document.getElementById('brand-name-login');
-                var sidebarBrand = document.getElementById('brand-name-sidebar');
-                var sidebarSub = document.getElementById('brand-subtitle-sidebar');
-                var topbarBrand = document.getElementById('brand-name-topbar');
-
-                if (loginBrand && name) loginBrand.textContent = name + (nameEn ? ' ' + nameEn : '');
-                if (sidebarBrand && name) sidebarBrand.textContent = name;
-                if (sidebarSub) sidebarSub.textContent = nameEn || '';
-                if (topbarBrand && name) topbarBrand.textContent = name;
-
-                // Apply logo to all logo elements
-                var logoEls = [
-                    document.getElementById('login-logo'),
-                    document.getElementById('sidebar-logo'),
-                    document.getElementById('topbar-logo')
-                ];
-
-                logoEls.forEach(function (el) {
-                    if (!el) return;
-                    if (logo) {
-                        el.innerHTML = '<img src="' + logo + '" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;" alt="logo">';
-                        el.style.background = 'transparent';
-                        el.style.boxShadow = 'none';
-                    } else if (name || nameEn) {
-                        var letter = ((nameEn || name || 'A') + '').charAt(0).toUpperCase();
-                        el.innerHTML = letter;
-                        el.style.background = '';
-                        el.style.boxShadow = '';
-                    }
-                });
-
-                // Update title
-                if (name) document.title = name + (nameEn ? ' — ' + nameEn : '');
-            } catch (e) {
-                console.error('[Branding] Error:', e);
-            }
+                // Settings logic...
+            } catch (e) { }
         })();
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
 
-        // Also re-apply after short delays to catch any late renders
-        setTimeout(function () {
-            if (window.Settings && Settings.applyShopName) Settings.applyShopName();
-        }, 300);
-        setTimeout(function () {
-            if (window.Settings && Settings.applyShopName) Settings.applyShopName();
-        }, 1000);
+    function getSetting(key, def) {
+    var s = settings.find(function (item) { return item.key === key; });
+    return s ? s.value : def;
+    }
+
+    var name = getSetting('company_name', '');
+    var nameEn = getSetting('company_name_en', '');
+    var logo = getSetting('company_logo', '');
+
+    if (!name && !nameEn && !logo) return; // nothing custom saved
+
+    // Apply to all brand text elements
+    var loginBrand = document.getElementById('brand-name-login');
+    var sidebarBrand = document.getElementById('brand-name-sidebar');
+    var sidebarSub = document.getElementById('brand-subtitle-sidebar');
+    var topbarBrand = document.getElementById('brand-name-topbar');
+
+    if (loginBrand && name) loginBrand.textContent = name + (nameEn ? ' ' + nameEn : '');
+    if (sidebarBrand && name) sidebarBrand.textContent = name;
+    if (sidebarSub) sidebarSub.textContent = nameEn || '';
+    if (topbarBrand && name) topbarBrand.textContent = name;
+
+    // Apply logo to all logo elements
+    var logoEls = [
+    document.getElementById('login-logo'),
+    document.getElementById('sidebar-logo'),
+    document.getElementById('topbar-logo')
+    ];
+
+    logoEls.forEach(function (el) {
+    if (!el) return;
+    if (logo) {
+    el.innerHTML = '<img src="' + logo + '" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;"
+        alt="logo">';
+    el.style.background = 'transparent';
+    el.style.boxShadow = 'none';
+    } else if (name || nameEn) {
+    var letter = ((nameEn || name || 'A') + '').charAt(0).toUpperCase();
+    el.innerHTML = letter;
+    el.style.background = '';
+    el.style.boxShadow = '';
+    }
+    });
+
+    // Update title
+    if (name) document.title = name + (nameEn ? ' — ' + nameEn : '');
+    } catch (e) {
+    console.error('[Branding] Error:', e);
+    }
+    })();
+
+    // Also re-apply after short delays to catch any late renders
+    setTimeout(function () {
+    if (window.Settings && Settings.applyShopName) Settings.applyShopName();
+    }, 300);
+    setTimeout(function () {
+    if (window.Settings && Settings.applyShopName) Settings.applyShopName();
+    }, 1000);
     </script>
 </body>
 

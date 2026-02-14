@@ -5,11 +5,12 @@
 const Invoices = {
     render() {
         const content = document.getElementById('content-body');
-        const isAdmin = Auth.isAdmin();
+        const isAdmin = Auth.isAdmin(); // Keep for UI logic, but filter data by permission
         const userId = Auth.currentUser.id;
+        const canViewAll = Auth.hasPermission('view_invoices'); // Renaming concept: view_invoices now means ALL invoices
 
         let sales = db.getCollection('sales').reverse();
-        if (!isAdmin) {
+        if (!canViewAll) {
             sales = sales.filter(s => s.cashierId === userId);
         }
 
@@ -83,10 +84,9 @@ const Invoices = {
                 <td><span class="badge ${isSimplified ? 'badge-accent' : 'badge-success'}">${isSimplified ? t('simplified') : t('full_invoice')}</span></td>
                 <td>
                     <button class="btn btn-ghost btn-sm" onclick="Invoices.viewInvoice('${s.id}')" title="${t('view')}">👁️</button>
-                    ${isAdmin ? `
-                    <button class="btn btn-ghost btn-sm" onclick="Invoices.editInvoice('${s.id}')" title="${t('edit')}">✏️</button>
-                    <button class="btn btn-ghost btn-sm" onclick="Invoices.deleteInvoice('${s.id}')" title="${t('delete')}" style="color:var(--danger)">🗑️</button>
-                    ` : ''}
+                    <button class="btn btn-ghost btn-sm" onclick="Invoices.viewInvoice('${s.id}')" title="${t('view')}">👁️</button>
+                    ${Auth.hasPermission('manage_invoices') ? `<button class="btn btn-ghost btn-sm" onclick="Invoices.editInvoice('${s.id}')" title="${t('edit')}">✏️</button>` : ''}
+                    ${Auth.hasPermission('delete_sales') ? `<button class="btn btn-ghost btn-sm" onclick="Invoices.deleteInvoice('${s.id}')" title="${t('delete')}" style="color:var(--danger)">🗑️</button>` : ''}
                     <button class="btn btn-ghost btn-sm" onclick="Invoices.printInvoice('${s.id}')" title="${t('print_a4')}">🖨️</button>
                     <button class="btn btn-ghost btn-sm" onclick="Invoices.printReceipt('${s.id}')" title="${t('print_receipt')}">🧾</button>
                 </td>
@@ -174,7 +174,7 @@ const Invoices = {
                     ${(sale.items || []).map((item, i) => `
                     <tr>
                         <td>${i + 1}</td>
-                        <td>${Utils.escapeHTML(item.name)}</td>
+                        <td>${Utils.escapeHTML(Utils.getName(db.getById('products', item.productId)) || item.name)}</td>
                         <td>${item.qty}</td>
                         <td style="font-family:Inter;">${Utils.formatSAR(item.price)}</td>
                         <td style="font-family:Inter; font-weight:600;">${Utils.formatSAR(item.price * item.qty)}</td>

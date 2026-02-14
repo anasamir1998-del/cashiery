@@ -176,7 +176,7 @@ const Purchases = {
                         <label>${t('select_product')}</label>
                         <select class="form-control" id="pur-product-select">
                             <option value="">-- ${t('select_product')} --</option>
-                            ${products.map(p => `<option value="${p.id}">${p.name} (${p.stock || 0})</option>`).join('')}
+                            ${products.map(p => `<option value="${p.id}">${Utils.getName(p)} (${p.stock || 0})</option>`).join('')}
                         </select>
                     </div>
 
@@ -251,7 +251,7 @@ const Purchases = {
         } else {
             this.cart.push({
                 productId,
-                name: product.name,
+                name: Utils.getName(product),
                 qty: 1,
                 cost: product.costPrice || 0 // Assuming costPrice exists, else 0
             });
@@ -263,7 +263,7 @@ const Purchases = {
         const tbody = document.getElementById('pur-cart-tbody');
         tbody.innerHTML = this.cart.map((item, index) => `
             <tr>
-                <td>${item.name}</td>
+                <td>${Utils.getName(db.getById('products', item.productId)) || item.name}</td>
                 <td><input type="number" class="form-control sm-input" value="${item.qty}" min="1" onchange="Purchases.updateItem(${index}, 'qty', this.value)"></td>
                 <td><input type="number" class="form-control sm-input" value="${item.cost}" min="0" step="0.01" onchange="Purchases.updateItem(${index}, 'cost', this.value)"></td>
                 <td>${(item.qty * item.cost).toFixed(2)}</td>

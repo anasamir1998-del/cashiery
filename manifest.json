@@ -1,0 +1,21 @@
+{
+    "name": "ARES Casher Pro",
+    "short_name": "Casher Pro",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#0f3460",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

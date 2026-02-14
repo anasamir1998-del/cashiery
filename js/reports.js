@@ -222,11 +222,17 @@ const Reports = {
         const productStats = {};
         sales.forEach(s => {
             (s.items || []).forEach(item => {
-                if (!productStats[item.name]) {
-                    productStats[item.name] = { name: item.name, qty: 0, revenue: 0 };
+                const id = item.productId || item.name; // Fallback to name if no ID (legacy)
+                if (!productStats[id]) {
+                    productStats[id] = {
+                        id: item.productId,
+                        name: item.name,
+                        qty: 0,
+                        revenue: 0
+                    };
                 }
-                productStats[item.name].qty += item.qty;
-                productStats[item.name].revenue += item.price * item.qty;
+                productStats[id].qty += item.qty;
+                productStats[id].revenue += item.price * item.qty;
             });
         });
 
@@ -244,13 +250,17 @@ const Reports = {
                         </tr>
                     </thead>
                     <tbody>
-                        ${sorted.map((p, i) => `
+                        ${sorted.map((p, i) => {
+            const product = p.id ? db.getById('products', p.id) : null;
+            const displayName = product ? Utils.getName(product) : p.name;
+            return `
                         <tr>
                             <td>${i + 1}</td>
-                            <td><strong>${Utils.escapeHTML(p.name)}</strong></td>
+                            <td><strong>${Utils.escapeHTML(displayName)}</strong></td>
                             <td>${p.qty}</td>
                             <td style="font-family:Inter; font-weight:600;">${Utils.formatSAR(p.revenue)}</td>
-                        </tr>`).join('')}
+                        </tr>`;
+        }).join('')}
                     </tbody>
                 </table>
                 ${sorted.length === 0 ? `<div class="empty-state p-24"><p>${t('no_sales_data')}</p></div>` : ''}
