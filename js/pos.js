@@ -99,9 +99,6 @@ const POS = {
             const q = this.searchQuery.toLowerCase();
             products = products.filter(p =>
                 p.name.toLowerCase().includes(q) ||
-                (p.nameAr && p.nameAr.includes(q)) ||
-                (p.nameEn && p.nameEn.toLowerCase().includes(q)) ||
-                (p.nameUr && p.nameUr.includes(q)) ||
                 (p.barcode && p.barcode.includes(q))
             );
         }
@@ -119,7 +116,7 @@ const POS = {
             return `
             <div class="product-card" onclick="POS.addToCart('${p.id}')" ${outOfStock ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
                 <div class="product-card-image">${productVisual}</div>
-                <h4>${Utils.escapeHTML(Utils.getName(p))}</h4>
+                <h4>${Utils.escapeHTML(p.name)}</h4>
                 <div class="price">${Utils.formatSAR(p.price)}</div>
                 ${isService ? `<span class="badge badge-info" style="font-size:10px;">∞ ${t('type_service')}</span>` : (p.stock !== undefined && p.stock <= 5 ? `<span class="badge badge-warning" style="font-size:10px;">${t('remaining')} ${p.stock}</span>` : '')}
             </div>`;
@@ -138,7 +135,7 @@ const POS = {
         return this.cart.map((item, i) => `
             <div class="cart-item">
                 <div class="cart-item-info">
-                    <h4>${Utils.escapeHTML(Utils.getName(db.getById('products', item.productId)) || item.name)}</h4>
+                    <h4>${Utils.escapeHTML(item.name)}</h4>
                     <span>${Utils.formatSAR(item.price)} × ${item.qty}</span>
                 </div>
                 <div class="cart-item-qty">

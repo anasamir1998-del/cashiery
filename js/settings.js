@@ -117,28 +117,25 @@ const Settings = {
                         <input type="text" class="form-control" id="s-company-name" value="${db.getSetting('company_name', '')}">
                     </div>
                     <div class="form-group">
-                        <label>${t('company_name_en')}</label>
-                        <input type="text" class="form-control" id="s-company-name-en" value="${db.getSetting('company_name_en', '')}" style="direction:ltr;">
+                        <label>${t('vat_number')} (VAT Number)</label>
+                        <input type="text" class="form-control" id="s-vat-number" value="${db.getSetting('vat_number', '')}" style="direction:ltr;" placeholder="3xxxxxxxxxxxxxxx">
                     </div>
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label>${t('vat_number')} (VAT Number)</label>
-                        <input type="text" class="form-control" id="s-vat-number" value="${db.getSetting('vat_number', '')}" style="direction:ltr;" placeholder="3xxxxxxxxxxxxxxx">
-                    </div>
-                    <div class="form-group">
                         <label>${t('cr_number')} (CR Number)</label>
                         <input type="text" class="form-control" id="s-cr-number" value="${db.getSetting('cr_number', '')}" style="direction:ltr;">
+                    </div>
+                    <div class="form-group">
+                        <label>${t('phone')}</label>
+                        <input type="text" class="form-control" id="s-phone" value="${db.getSetting('company_phone', '')}" style="direction:ltr;">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>${t('address')}</label>
                     <textarea class="form-control" id="s-address" rows="2">${db.getSetting('company_address', '')}</textarea>
                 </div>
-                <div class="form-group">
-                    <label>${t('phone')}</label>
-                    <input type="text" class="form-control" id="s-phone" value="${db.getSetting('company_phone', '')}" style="direction:ltr;">
-                </div>
+
                 <button class="btn btn-primary" onclick="Settings.saveCompany()">💾 ${t('save_data')}</button>
                 
                 <!-- Preview -->

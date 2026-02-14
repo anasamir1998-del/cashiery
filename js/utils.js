@@ -8,16 +8,6 @@ const Utils = {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     },
 
-    // Get localized name
-    getName(product) {
-        if (!product) return '';
-        const lang = (typeof I18n !== 'undefined') ? I18n.currentLang : 'ar';
-        if (lang === 'en' && product.nameEn) return product.nameEn;
-        if (lang === 'ur' && product.nameUr) return product.nameUr;
-        if (lang === 'ar' && product.nameAr) return product.nameAr;
-        return product.name; // Fallback to default name
-    },
-
     // Format currency (SAR)
     formatCurrency(amount) {
         return new Intl.NumberFormat('ar-SA', {

@@ -12,7 +12,6 @@ const Receipt = {
 
         // Read settings dynamically every time
         const shopName = db.getSetting('company_name', 'ARES Casher Pro');
-        const shopNameEn = db.getSetting('company_name_en', '');
         const shopPhone = db.getSetting('company_phone', '');
         const shopAddress = db.getSetting('company_address', '');
         const vatNumber = db.getSetting('vat_number', '');
@@ -55,7 +54,7 @@ const Receipt = {
             const total = (price * qty).toFixed(2);
             return `
             <tr>
-                <td style="text-align:start;">${Utils.escapeHTML(Utils.getName(db.getById('products', item.productId)) || item.name)}</td>
+                <td style="text-align:start;">${Utils.escapeHTML(item.name)}</td>
                 <td style="text-align:center;">${qty}</td>
                 <td style="text-align:end;">${price.toFixed(2)}</td>
                 <td style="text-align:end;">${total}</td>

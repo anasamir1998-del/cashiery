@@ -160,18 +160,8 @@ const Products = {
 
                 <div style="flex:1;">
                     <div class="form-group mb-12">
-                        <label>${t('product_name')} (${t('name_ar')}) *</label>
-                        <input type="text" class="form-control" id="p-name-ar" value="${product?.nameAr || product?.name || ''}" placeholder="${t('name_ar')}">
-                    </div>
-                    <div class="grid-2 mb-12">
-                        <div class="form-group">
-                            <label>${t('name_en')}</label>
-                            <input type="text" class="form-control" id="p-name-en" value="${product?.nameEn || ''}" placeholder="${t('name_en')}" style="direction:ltr;">
-                        </div>
-                        <div class="form-group">
-                            <label>${t('name_ur')}</label>
-                            <input type="text" class="form-control" id="p-name-ur" value="${product?.nameUr || ''}" placeholder="${t('name_ur')}">
-                        </div>
+                        <label>${t('product_name')} *</label>
+                        <input type="text" class="form-control" id="p-name" value="${Utils.escapeHTML(product?.name || '')}" placeholder="${t('product_name')}">
                     </div>
                     <div class="form-group">
                         <label>${t('product_type')}</label>
@@ -351,12 +341,7 @@ const Products = {
 
     save(id) {
         const type = document.getElementById('p-type').value;
-        const nameAr = document.getElementById('p-name-ar').value.trim();
-        const nameEn = document.getElementById('p-name-en').value.trim();
-        const nameUr = document.getElementById('p-name-ur').value.trim();
-        // Use Arabic name as default/fallback 'name'
-        const name = nameAr;
-
+        const name = document.getElementById('p-name').value.trim();
         const price = parseFloat(document.getElementById('p-price').value);
         const categoryId = document.getElementById('p-category').value;
         const stock = document.getElementById('p-stock').value ? parseInt(document.getElementById('p-stock').value) : 0;
@@ -372,7 +357,7 @@ const Products = {
         }
 
         const productData = {
-            name, nameAr, nameEn, nameUr,
+            name,
             price, categoryId: categoryId || null, type,
             stock: type === 'service' ? 0 : stock,
             minStock: type === 'service' ? 0 : minStock,

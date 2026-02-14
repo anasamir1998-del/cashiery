@@ -252,7 +252,7 @@ const Reports = {
                     <tbody>
                         ${sorted.map((p, i) => {
             const product = p.id ? db.getById('products', p.id) : null;
-            const displayName = product ? Utils.getName(product) : p.name;
+            const displayName = product ? product.name : p.name;
             return `
                         <tr>
                             <td>${i + 1}</td>
