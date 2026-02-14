@@ -189,6 +189,11 @@ const I18n = {
 
         // ── Products ───────────────────────────────────
         product_management: { ar: 'إدارة المنتجات', en: 'Product Management', ur: 'مصنوعات مینجمنٹ' },
+        product_added: { ar: 'تم إضافة المنتج', en: 'Product Added', ur: 'مصنوعات شامل ہو گئی' },
+        product_edited: { ar: 'تم تعديل المنتج', en: 'Product Edited', ur: 'مصنوعات ترمیم ہو گئی' },
+        product_deleted: { ar: 'تم حذف المنتج', en: 'Product Deleted', ur: 'مصنوعات حذف ہو گئی' },
+        select_product: { ar: 'اختر المنتج', en: 'Select Product', ur: 'مصنوعات منتخب کریں' },
+        select_supplier: { ar: 'اختر المورد', en: 'Select Supplier', ur: 'سپلائر منتخب کریں' },
         add_product: { ar: 'إضافة منتج', en: 'Add Product', ur: 'مصنوع شامل کریں' },
         edit_product: { ar: 'تعديل المنتج', en: 'Edit Product', ur: 'مصنوع ترمیم' },
         product_name: { ar: 'اسم المنتج', en: 'Product Name', ur: 'مصنوع کا نام' },

@@ -147,6 +147,7 @@ const Purchases = {
     renderNewPurchase() {
         // this.cart = []; // REMOVED: Managed by switchTab now
         const suppliers = db.getCollection('suppliers');
+        const products = db.getCollection('products');
 
         return `
             <div class="grid-layout" style="grid-template-columns: 1fr 350px; gap:24px;">
@@ -172,9 +173,11 @@ const Purchases = {
                     </div>
 
                     <div class="form-group mb-20">
-                        <label>${t('search_product')}</label>
-                        <input type="text" class="form-control" id="pur-search" placeholder="${t('search_placeholder')}">
-                        <div id="pur-results" class="search-results hidden"></div>
+                        <label>${t('select_product')}</label>
+                        <select class="form-control" id="pur-product-select">
+                            <option value="">-- ${t('select_product')} --</option>
+                            ${products.map(p => `<option value="${p.id}">${p.name} (${p.stock || 0})</option>`).join('')}
+                        </select>
                     </div>
 
                     <table class="data-table">
@@ -224,41 +227,17 @@ const Purchases = {
                 });
             }
 
-            // Search Logic
-            const input = document.getElementById('pur-search');
-            const results = document.getElementById('pur-results');
-
-            input.addEventListener('input', (e) => {
-                const q = e.target.value.toLowerCase();
-                if (q.length < 2) { results.classList.add('hidden'); return; }
-
-                const products = db.getCollection('products');
-                const matches = products.filter(p =>
-                    p.name.toLowerCase().includes(q) ||
-                    (p.barcode && p.barcode.includes(q))
-                ).slice(0, 5);
-
-                if (matches.length > 0) {
-                    results.innerHTML = matches.map(p => `
-                        <div class="result-item" onclick="Purchases.addToCart('${p.id}')">
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>${p.name}</span>
-                                <span class="badge badge-info">${p.stock || 0}</span>
-                            </div>
-                        </div>
-                    `).join('');
-                    results.classList.remove('hidden');
-                } else {
-                    results.classList.add('hidden');
-                }
-            });
-
-            // Close results on click outside
-            document.addEventListener('click', (e) => {
-                if (!input.contains(e.target) && !results.contains(e.target)) {
-                    results.classList.add('hidden');
-                }
-            });
+            // Dropdown Logic
+            const productSelect = document.getElementById('pur-product-select');
+            if (productSelect) {
+                productSelect.addEventListener('change', (e) => {
+                    const productId = e.target.value;
+                    if (productId) {
+                        Purchases.addToCart(productId);
+                        e.target.value = ""; // Reset selection
+                    }
+                });
+            }
         }, 100);
     },
 
@@ -277,8 +256,6 @@ const Purchases = {
                 cost: product.costPrice || 0 // Assuming costPrice exists, else 0
             });
         }
-        document.getElementById('pur-results').classList.add('hidden');
-        document.getElementById('pur-search').value = '';
         this.renderCart();
     },
 
