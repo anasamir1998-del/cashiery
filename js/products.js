@@ -73,19 +73,23 @@ const Products = {
     renderProductsRows(products, categories) {
         return products.map(p => {
             const cat = categories.find(c => c.id === p.categoryId);
-            const lowStock = p.stock !== undefined && p.stock <= (p.minStock || 5);
+            const isService = p.type === 'service';
+            const lowStock = !isService && p.stock !== undefined && p.stock <= (p.minStock || 5);
             return `
             <tr>
                 <td>
                     <div style="width:40px; height:40px; border-radius:var(--radius-sm); background:var(--bg-glass); display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden;">
-                        ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : (p.emoji || '📦')}
+                        ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : (p.emoji || (isService ? '🛠️' : '📦'))}
                     </div>
                 </td>
-                <td><strong>${Utils.escapeHTML(p.name)}</strong></td>
+                <td>
+                    <strong>${Utils.escapeHTML(p.name)}</strong>
+                    ${isService ? `<span class="badge badge-info" style="font-size:10px; margin-right:4px;">${t('type_service')}</span>` : ''}
+                </td>
                 <td>${cat ? `<span class="badge" style="background:${cat.color}22; color:${cat.color};">${cat.icon || ''} ${cat.name}</span>` : '—'}</td>
                 <td style="font-family:Inter; font-weight:600;">${Utils.formatSAR(p.price)}</td>
                 <td>
-                    <span class="badge ${lowStock ? 'badge-danger' : 'badge-success'}">${p.stock !== undefined ? p.stock : '∞'}</span>
+                    <span class="badge ${isService ? 'badge-info' : (lowStock ? 'badge-danger' : 'badge-success')}">${isService ? '∞' : (p.stock !== undefined ? p.stock : 0)}</span>
                 </td>
                 <td style="font-family:Inter; font-size:12px; color:var(--text-muted);">${p.barcode || '—'}</td>
                 <td>
@@ -143,6 +147,13 @@ const Products = {
                         <label>${t('product_name')} *</label>
                         <input type="text" class="form-control" id="p-name" value="${product ? Utils.escapeHTML(product.name) : ''}">
                     </div>
+                    <div class="form-group">
+                        <label>${t('product_type')}</label>
+                        <select class="form-control" id="p-type" onchange="Products.toggleStockFields()">
+                            <option value="product" ${product?.type !== 'service' ? 'selected' : ''}>📦 ${t('type_product')}</option>
+                            <option value="service" ${product?.type === 'service' ? 'selected' : ''}>🛠️ ${t('type_service')}</option>
+                        </select>
+                    </div>
                     <div class="grid-2">
                         <div class="form-group">
                             <label>${t('unit_price')} (${t('sar')}) *</label>
@@ -159,10 +170,10 @@ const Products = {
                 </div>
             </div>
 
-            <div class="grid-2">
+            <div class="grid-2" id="stock-fields">
                 <div class="form-group">
                     <label>${t('stock')}</label>
-                    <input type="number" class="form-control" id="p-stock" value="${product?.stock ?? ''}" min="0" style="direction:ltr;">
+                    <input type="number" class="form-control" id="p-stock" value="${product?.stock ?? 0}" min="0" style="direction:ltr;">
                 </div>
                 <div class="form-group">
                     <label>${t('min_stock_alert')}</label>
@@ -200,6 +211,19 @@ const Products = {
             <button class="btn btn-primary" onclick="Products.save(${id ? `'${id}'` : 'null'})">${id ? t('save_changes') : t('add_product')}</button>
             <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
         `, { wide: true });
+
+        // Init UI state
+        setTimeout(() => this.toggleStockFields(), 50);
+    },
+
+    toggleStockFields() {
+        const type = document.getElementById('p-type').value;
+        const fields = document.getElementById('stock-fields');
+        if (type === 'service') {
+            fields.style.display = 'none';
+        } else {
+            fields.style.display = 'grid';
+        }
     },
 
     chooseImage() {
@@ -247,10 +271,11 @@ const Products = {
     },
 
     save(id) {
+        const type = document.getElementById('p-type').value;
         const name = document.getElementById('p-name').value.trim();
         const price = parseFloat(document.getElementById('p-price').value);
         const categoryId = document.getElementById('p-category').value;
-        const stock = document.getElementById('p-stock').value ? parseInt(document.getElementById('p-stock').value) : undefined;
+        const stock = document.getElementById('p-stock').value ? parseInt(document.getElementById('p-stock').value) : 0;
         const minStock = parseInt(document.getElementById('p-min-stock').value) || 5;
         const barcode = document.getElementById('p-barcode').value.trim();
         const active = document.getElementById('p-active').value === 'true';
@@ -262,8 +287,10 @@ const Products = {
         }
 
         const productData = {
-            name, price, categoryId: categoryId || null,
-            stock, minStock, barcode, active, notes,
+            name, price, categoryId: categoryId || null, type,
+            stock: type === 'service' ? 0 : stock,
+            minStock: type === 'service' ? 0 : minStock,
+            barcode, active, notes,
             image: this.selectedImage || null,
             emoji: this.selectedEmoji || null
         };

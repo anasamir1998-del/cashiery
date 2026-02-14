@@ -108,16 +108,17 @@ const POS = {
         }
 
         return products.map(p => {
-            const outOfStock = p.stock !== undefined && p.stock <= 0;
+            const isService = p.type === 'service';
+            const outOfStock = !isService && p.stock !== undefined && p.stock <= 0;
             const productVisual = p.image
                 ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md);">`
-                : (p.emoji || '📦');
+                : (p.emoji || (isService ? '🛠️' : '📦'));
             return `
             <div class="product-card" onclick="POS.addToCart('${p.id}')" ${outOfStock ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
                 <div class="product-card-image">${productVisual}</div>
                 <h4>${Utils.escapeHTML(p.name)}</h4>
                 <div class="price">${Utils.formatSAR(p.price)}</div>
-                ${p.stock !== undefined && p.stock <= 5 ? `<span class="badge badge-warning" style="font-size:10px;">${t('remaining')} ${p.stock}</span>` : ''}
+                ${isService ? `<span class="badge badge-info" style="font-size:10px;">∞ ${t('type_service')}</span>` : (p.stock !== undefined && p.stock <= 5 ? `<span class="badge badge-warning" style="font-size:10px;">${t('remaining')} ${p.stock}</span>` : '')}
             </div>`;
         }).join('');
     },
@@ -194,14 +195,16 @@ const POS = {
         if (!product) return;
 
         const existing = this.cart.find(item => item.productId === productId);
+        const isService = product.type === 'service';
+
         if (existing) {
-            if (product.stock !== undefined && existing.qty >= product.stock) {
+            if (!isService && product.stock !== undefined && existing.qty >= product.stock) {
                 Toast.show(t('warning'), t('not_enough_stock'), 'warning');
                 return;
             }
             existing.qty++;
         } else {
-            if (product.stock !== undefined && product.stock <= 0) {
+            if (!isService && product.stock !== undefined && product.stock <= 0) {
                 Toast.show(t('warning'), t('product_unavailable'), 'warning');
                 return;
             }
@@ -461,7 +464,7 @@ const POS = {
             // CRITICAL: Restore Stock of ORIGINAL items before deducting new ones
             this.editingInvoice.items.forEach(item => {
                 const product = db.getById('products', item.productId);
-                if (product && product.stock !== undefined) {
+                if (product && product.type !== 'service' && product.stock !== undefined) {
                     db.update('products', item.productId, {
                         stock: Number(product.stock) + Number(item.qty)
                     });
@@ -509,7 +512,8 @@ const POS = {
         // Update stock
         this.cart.forEach(item => {
             const product = db.getById('products', item.productId);
-            if (product && product.stock !== undefined) {
+            // Only update stock if NOT a service
+            if (product && product.type !== 'service' && product.stock !== undefined) {
                 db.update('products', item.productId, {
                     stock: Math.max(0, product.stock - item.qty)
                 });

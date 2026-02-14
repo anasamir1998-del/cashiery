@@ -308,7 +308,7 @@ const Purchases = {
                 // 1. Reverse OLD stock addition (Subtract old qty)
                 oldPurchase.items.forEach(item => {
                     const product = db.getById('products', item.productId);
-                    if (product) {
+                    if (product && product.type !== 'service') {
                         db.update('products', item.productId, {
                             stock: Number(product.stock || 0) - Number(item.qty)
                         });
@@ -344,11 +344,14 @@ const Purchases = {
         this.cart.forEach(item => {
             const product = db.getById('products', item.productId);
             if (product) {
-                // Simple Stock Increment
-                const currentStock = parseFloat(product.stock || 0);
-                const newStock = currentStock + item.qty;
+                // Determine new stock
+                let newStock = product.stock;
+                if (product.type !== 'service') {
+                    const currentStock = parseFloat(product.stock || 0);
+                    newStock = currentStock + item.qty;
+                }
 
-                // Update cost price
+                // Update stock (if not service) and cost price
                 db.update('products', item.productId, {
                     stock: newStock,
                     costPrice: item.cost
@@ -368,7 +371,7 @@ const Purchases = {
             // Reverse Stock (Subtract)
             purchase.items.forEach(item => {
                 const product = db.getById('products', item.productId);
-                if (product) {
+                if (product && product.type !== 'service') {
                     db.update('products', item.productId, {
                         stock: Number(product.stock || 0) - Number(item.qty)
                     });
