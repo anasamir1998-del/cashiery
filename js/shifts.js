@@ -64,6 +64,7 @@ const Shifts = {
                                     <td style="font-family:Inter; font-weight:600;">${Utils.formatSAR(totalSales)}</td>
                                     <td>
                                         <span class="badge ${s.status === 'open' ? 'badge-success' : 'badge-info'}">${s.status === 'open' ? t('status_open') : t('status_closed')}</span>
+                                        ${s.status === 'closed' ? `<button class="btn btn-ghost btn-sm" onclick="Shifts.printShiftReport('${s.id}')" title="${t('print')}">🖨️</button>` : ''}
                                     </td>
                                 </tr>`;
             }).join('')}
@@ -171,14 +172,104 @@ const Shifts = {
 
     confirmClose() {
         const closingCash = parseFloat(document.getElementById('closing-cash').value) || 0;
-        db.update('shifts', App.activeShiftId, {
+        const shiftId = App.activeShiftId; // Capture ID before clearing
+
+        db.update('shifts', shiftId, {
             endTime: Utils.isoDate(),
             closingCash,
             status: 'closed'
         });
+
         App.activeShiftId = null;
         Modal.hide();
-        Toast.show(t('success'), t('shift_closed_msg'), 'success');
+
+        // Prompt to print report
+        Modal.show(`✅ ${t('shift_closed_msg')}`, `
+            <div style="text-align:center; padding:20px;">
+                <p>${t('print_shift_report_manual') || 'Do you want to print the shift report?'}</p>
+            </div>
+        `, `
+            <button class="btn btn-primary" onclick="Shifts.printShiftReport('${shiftId}'); Modal.hide()">${t('print_report') || 'Print Report'}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('close')}</button>
+        `);
+
         this.render();
+    },
+
+    printShiftReport(shiftId) {
+        const shift = db.getById('shifts', shiftId);
+        if (!shift) return;
+
+        const shiftSales = db.query('sales', s => s.shiftId === shiftId);
+        const totalSales = shiftSales.reduce((sum, s) => sum + s.total, 0);
+        const totalVAT = shiftSales.reduce((sum, s) => sum + s.vatAmount, 0);
+        const cashSales = shiftSales.filter(s => s.paymentMethod === 'نقدي').reduce((sum, s) => sum + s.total, 0);
+        const cardSales = shiftSales.filter(s => s.paymentMethod === 'بطاقة').reduce((sum, s) => sum + s.total, 0);
+        const transferSales = shiftSales.filter(s => s.paymentMethod === 'تحويل').reduce((sum, s) => sum + s.total, 0);
+
+        const expectedCash = (shift.openingCash || 0) + cashSales;
+        const diff = (shift.closingCash || 0) - expectedCash;
+
+        const brandHTML = App.getCompanyBrandHTML ? App.getCompanyBrandHTML(true) : '';
+        const dir = I18n.getDir();
+
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html dir="${dir}">
+            <head>
+                <meta charset="UTF-8">
+                <title>${t('shift_report')} #${shiftId.substr(0, 8)}</title>
+                <style>
+                    body { font-family: 'Cairo', sans-serif; padding: 20px; text-align: center; direction: ${dir}; }
+                    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                    th, td { padding: 5px; border-bottom: 1px solid #ddd; text-align: ${dir === 'rtl' ? 'right' : 'left'}; }
+                    .summary { background: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+                    .total { font-size: 18px; font-weight: bold; margin: 10px 0; }
+                </style>
+            </head>
+            <body>
+                ${brandHTML}
+                <h3>${t('shift_report')}</h3>
+                <p>${t('employee')}: ${shift.userName}</p>
+                <p style="font-size:12px;">${Utils.formatDateTime(shift.startTime)} <br>⬇<br> ${shift.endTime ? Utils.formatDateTime(shift.endTime) : '...'}</p>
+                
+                <div class="summary">
+                    <table>
+                        <tr><td>${t('opening_cash')}</td><td>${Utils.formatSAR(shift.openingCash || 0)}</td></tr>
+                        <tr><td>${t('cash_sales')}</td><td>${Utils.formatSAR(cashSales)}</td></tr>
+                        <tr><td>${t('card_sales')}</td><td>${Utils.formatSAR(cardSales)}</td></tr>
+                        <tr><td>${t('transfer_sales')}</td><td>${Utils.formatSAR(transferSales)}</td></tr>
+                        <tr style="font-weight:bold; border-top:2px solid #000;">
+                            <td>${t('total_sales')}</td>
+                            <td>${Utils.formatSAR(totalSales)}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                ${shift.status === 'closed' ? `
+                <div class="summary" style="border:1px dashed #333;">
+                    <p><strong>${t('cash_reconciliation') || 'Cash Reconciliation'}</strong></p>
+                    <table>
+                        <tr><td>${t('expected_amount')}</td><td>${Utils.formatSAR(expectedCash)}</td></tr>
+                        <tr><td>${t('actual_amount')}</td><td>${Utils.formatSAR(shift.closingCash || 0)}</td></tr>
+                        <tr>
+                            <td>${t('difference')}</td>
+                            <td style="color:${diff < 0 ? 'red' : diff > 0 ? 'green' : 'black'}; font-weight:bold;">
+                                ${Utils.formatSAR(diff)}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                ` : ''}
+                
+                <p style="font-size:12px; margin-top:20px;">${Utils.formatDateTime(new Date().toISOString())}</p>
+                <script>
+                    setTimeout(() => { window.print(); window.close(); }, 500);
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 };
