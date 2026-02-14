@@ -184,7 +184,7 @@ const Receipt = {
                     </div>` : `
                     <div class="row">
                         <span>${t('vat')}</span>
-                        <span>0.00 ${currency} (${t('tax_exempt') || 'Tax Exempt'})</span>
+                        <span>0.00 ${currency}</span>
                     </div>`}
                     ${showDiscount && sale.discount ? `
                     <div class="row">
