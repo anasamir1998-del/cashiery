@@ -10,8 +10,13 @@ class Database {
 
     // Get collection
     getCollection(name) {
-        const data = localStorage.getItem(this.prefix + name);
-        return data ? JSON.parse(data) : [];
+        try {
+            const data = localStorage.getItem(this.prefix + name);
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error('Database integrity error (' + name + '):', e);
+            return [];
+        }
     }
 
     // Set collection
@@ -108,6 +113,10 @@ class Database {
 
     // Initialize default data
     initDefaults() {
+        // Initialize new collections (Suppliers & Purchases) if missing
+        if (!localStorage.getItem(this.prefix + 'suppliers')) this.setCollection('suppliers', []);
+        if (!localStorage.getItem(this.prefix + 'purchases')) this.setCollection('purchases', []);
+
         // Default admin user
         if (this.getCollection('users').length === 0) {
             if (!localStorage.getItem(this.prefix + 'users')) {
@@ -115,8 +124,6 @@ class Database {
                     { id: '1', name: 'مدير النظام', username: 'admin', password: '123', role: 'مدير', permissions: null, active: true }
                 ]);
             }
-            if (!localStorage.getItem(this.prefix + 'suppliers')) this.setCollection('suppliers', []);
-            if (!localStorage.getItem(this.prefix + 'purchases')) this.setCollection('purchases', []);
 
             // Default categories
             if (this.getCollection('categories').length === 0) {
@@ -167,24 +174,25 @@ class Database {
                 sampleProducts.forEach(p => this.insert('products', p));
             }
         }
-
-        // Backup all data
-        backupAll() {
-            const backup = {};
-            const collections = ['users', 'products', 'categories', 'customers', 'sales', 'shifts', 'settings', 'held_orders'];
-            collections.forEach(c => {
-                backup[c] = this.getCollection(c);
-            });
-            return backup;
-        }
-
-        // Restore from backup
-        restoreAll(backup) {
-            Object.keys(backup).forEach(c => {
-                this.setCollection(c, backup[c]);
-            });
-        }
     }
 
-    // Global instance
-    const db = new Database();
+    // Backup all data
+    backupAll() {
+        const backup = {};
+        const collections = ['users', 'products', 'categories', 'customers', 'sales', 'shifts', 'settings', 'held_orders'];
+        collections.forEach(c => {
+            backup[c] = this.getCollection(c);
+        });
+        return backup;
+    }
+
+    // Restore from backup
+    restoreAll(backup) {
+        Object.keys(backup).forEach(c => {
+            this.setCollection(c, backup[c]);
+        });
+    }
+}
+
+// Global instance
+var db = new Database();
