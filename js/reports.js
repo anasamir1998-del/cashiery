@@ -16,7 +16,11 @@ const Reports = {
                         ${isAdmin ? `<button class="tab-btn" onclick="Reports.switchTab(this, 'vat')">🏦 ${t('vat_report')}</button>` : ''}
                         ${isAdmin ? `<button class="tab-btn" onclick="Reports.switchTab(this, 'products')">📦 ${t('products_report')}</button>` : ''}
                     </div>
-                    ${!isAdmin ? `<span class="badge badge-info" style="font-size:11px;">📊 ${t('your_reports')}</span>` : ''}
+                    <div class="flex gap-12">
+                        <button class="btn btn-sm btn-outline" onclick="Reports.printReport()">🖨️ ${t('print') || 'Print'}</button>
+                        <button class="btn btn-sm btn-outline" onclick="Reports.emailReport()">✉️ ${t('email') || 'Email'}</button>
+                        ${!isAdmin ? `<span class="badge badge-info" style="font-size:11px;">📊 ${t('your_reports')}</span>` : ''}
+                    </div>
                 </div>
                 <div id="report-content">
                     ${this.renderDailyReport()}
@@ -254,12 +258,14 @@ const Reports = {
         `;
     },
 
-    printVATReport() {
+    /* ── Export Logic ── */
+    printReport() {
         const content = document.getElementById('report-content');
-        const brandHTML = App.getCompanyBrandHTML(true);
+        const brandHTML = App.getCompanyBrandHTML ? App.getCompanyBrandHTML(true) : '';
         const dir = I18n.getDir();
         const lang = I18n.currentLang;
         const fontFamily = lang === 'ur' ? "'Noto Nastaliq Urdu','Cairo',sans-serif" : "'Cairo',sans-serif";
+        const title = document.querySelector('.tab-btn.active').innerText.replace(/[^a-zA-Z\u0600-\u06FF\s]/g, '').trim();
 
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
@@ -267,28 +273,80 @@ const Reports = {
             <html dir="${dir}" lang="${lang}">
             <head>
                 <meta charset="UTF-8">
-                <title>${t('vat_report')}</title>
+                <title>${title}</title>
                 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
                 <style>
                     body { font-family: ${fontFamily}; direction: ${dir}; padding: 30px; color: #333; }
                     h2, h3 { margin: 12px 0; }
+                    /* Hide non-printable elements like buttons if they were cloned */
+                    button { display: none !important; }
+                    
+                    /* Tables */
                     table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-                    th { background: #f0f0f0; padding: 10px; text-align: ${dir === 'rtl' ? 'right' : 'left'}; border: 1px solid #ddd; font-size: 13px; }
+                    th { background: #f0f0f0; padding: 10px; text-align: ${dir === 'rtl' ? 'right' : 'left'}; border: 1px solid #ddd; font-size: 13px; font-weight: 700; }
                     td { padding: 10px; border: 1px solid #ddd; font-size: 13px; }
-                    .stat-card { display: inline-block; padding: 16px; border: 1px solid #ddd; border-radius: 8px; margin: 6px; text-align: center; min-width: 160px; }
-                    .stat-card h3 { font-size: 18px; margin: 4px 0; }
-                    .stat-card p { font-size: 12px; color: #777; margin: 0; }
+                    
+                    /* Stat Cards */
+                    .stat-cards { display: flex; gap: 15px; margin-bottom: 24px; }
+                    .stat-card { flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 8px; text-align: center; background: #fafafa; }
+                    .stat-card-icon { font-size: 24px; margin-bottom: 8px; }
+                    .stat-card h3 { font-size: 20px; margin: 4px 0; font-weight: bold; color: #333; }
+                    .stat-card p { font-size: 12px; color: #666; margin: 0; }
+
+                    /* Grid Layouts restoration for print */
+                    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                    .glass-card { border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+
+                    @media print {
+                        .no-print { display: none; }
+                    }
                 </style>
             </head>
             <body>
                 ${brandHTML}
-                <h2 style="text-align:center;">${t('vat_report')}</h2>
-                <p style="text-align:center; color:#999; font-size:12px;">${t('print_date')}: ${Utils.formatDateTime(new Date().toISOString())}</p>
+                <h2 style="text-align:center; margin-bottom: 5px;">${title}</h2>
+                <p style="text-align:center; color:#999; font-size:12px; margin-bottom: 30px;">${t('print_date')}: ${Utils.formatDateTime(new Date().toISOString())}</p>
                 ${content.innerHTML}
+                <script>
+                    setTimeout(() => { window.print(); window.close(); }, 800);
+                </script>
             </body>
             </html>
         `);
         printWindow.document.close();
-        setTimeout(() => { printWindow.print(); }, 500);
+    },
+
+    emailReport() {
+        const title = document.querySelector('.tab-btn.active').innerText.replace(/[^a-zA-Z\u0600-\u06FF\s]/g, '').trim();
+        const date = Utils.formatDate(new Date());
+
+        let summary = `${title}\n${t('date')}: ${date}\n\n`;
+
+        // Extract basic stats text
+        const cards = document.querySelectorAll('#report-content .stat-card');
+        if (cards.length > 0) {
+            cards.forEach(card => {
+                const label = card.querySelector('p')?.innerText || '';
+                const value = card.querySelector('h3')?.innerText || '';
+                summary += `${label}: ${value}\n`;
+            });
+        }
+
+        // Extract table data if exists (Monthly report)
+        const table = document.querySelector('#report-content table');
+        if (table) {
+            summary += `\n--------------------------------\n`;
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('th, td');
+                const rowText = Array.from(cells).map(c => c.innerText.trim()).join(' | ');
+                summary += `${rowText}\n`;
+            });
+        }
+
+        const subject = encodeURIComponent(`${title} - ${date}`);
+        const body = encodeURIComponent(summary);
+
+        window.open(`mailto:?subject=${subject}&body=${body}`);
     }
 };
