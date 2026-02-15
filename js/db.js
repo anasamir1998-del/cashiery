@@ -285,51 +285,53 @@ class Database {
         if (!localStorage.getItem(this.prefix + 'suppliers')) this.setCollection('suppliers', []);
         if (!localStorage.getItem(this.prefix + 'purchases')) this.setCollection('purchases', []);
 
-        if (this.getCollection('users').length === 0) {
-            if (!localStorage.getItem(this.prefix + 'users')) {
-                this.setCollection('users', [
-                    { id: '1', name: 'مدير النظام', username: 'admin', password: '123', role: 'مدير', permissions: null, active: true }
-                ]);
-            }
+        // Check if users exist, otherwise create Admin
+        const users = this.getCollection('users');
+        if (users.length === 0) {
+            this.setCollection('users', [
+                { id: '1', name: 'مدير النظام', username: 'admin', password: '123', role: 'مدير', permissions: null, active: true }
+            ]);
+            console.log("Default Admin created");
+        }
 
-            if (this.getCollection('categories').length === 0) {
-                const cats = [
-                    { name: 'مشروبات', color: '#00b4d8', icon: '🥤', id: 'cat_1' },
-                    { name: 'وجبات', color: '#ff6b35', icon: '🍔', id: 'cat_2' },
-                    { name: 'حلويات', color: '#e91e84', icon: '🍰', id: 'cat_3' },
-                    { name: 'مخبوزات', color: '#ffaa00', icon: '🥐', id: 'cat_4' },
-                    { name: 'أخرى', color: '#667eea', icon: '📦', id: 'cat_5' }
-                ];
-                cats.forEach(c => this.insert('categories', c));
-            }
+        if (this.getCollection('categories').length === 0) {
+            const cats = [
+                { name: 'مشروبات', color: '#00b4d8', icon: '🥤', id: 'cat_1' },
+                { name: 'وجبات', color: '#ff6b35', icon: '🍔', id: 'cat_2' },
+                { name: 'حلويات', color: '#e91e84', icon: '🍰', id: 'cat_3' },
+                { name: 'مخبوزات', color: '#ffaa00', icon: '🥐', id: 'cat_4' },
+                { name: 'أخرى', color: '#667eea', icon: '📦', id: 'cat_5' }
+            ];
+            cats.forEach(c => this.insert('categories', c));
+        }
 
-            const settings = this.getCollection('settings');
-            const hasInit = settings.find(s => s.key === '_initialized');
-            if (!hasInit) {
-                this.setSetting('company_name', 'ARES Casher Pro');
-                this.setSetting('company_name_en', 'ARES Casher Pro');
-                this.setSetting('vat_number', '300000000000003');
-                this.setSetting('cr_number', '1010000000');
-                this.setSetting('company_address', 'الرياض، المملكة العربية السعودية');
-                this.setSetting('company_phone', '+966 50 000 0000');
-                this.setSetting('vat_rate', '15');
-                this.setSetting('currency', 'ر.س');
-                this.setSetting('invoice_counter', '0');
-                this.setSetting('_initialized', 'true');
-            }
+        const settings = this.getCollection('settings');
+        const hasInit = settings.find(s => s.key === '_initialized');
+        if (!hasInit) {
+            this.setSetting('company_name', 'ARES Casher Pro');
+            this.setSetting('company_name_en', 'ARES Casher Pro');
+            this.setSetting('vat_number', '300000000000003');
+            this.setSetting('cr_number', '1010000000');
+            this.setSetting('company_address', 'الرياض، المملكة العربية السعودية');
+            this.setSetting('company_phone', '+966 50 000 0000');
+            this.setSetting('vat_rate', '15');
+            this.setSetting('currency', 'ر.س');
+            this.setSetting('invoice_counter', '0');
+            this.setSetting('_initialized', 'true');
+        }
 
-            if (this.getCollection('products').length === 0) {
-                const cats = this.getCollection('categories');
-                // Only add samples if we really are starting fresh
-                const sampleProducts = [
-                    { name: 'قهوة عربية', price: 15, cost: 5, categoryId: cats[0]?.id, stock: 100, barcode: '100001', emoji: '☕', id: 'prod_1' },
-                    { name: 'كابتشينو', price: 20, cost: 7, categoryId: cats[0]?.id, stock: 100, barcode: '100002', emoji: '☕', id: 'prod_2' },
-                    { name: 'برجر كلاسيك', price: 35, cost: 15, categoryId: cats[1]?.id, stock: 30, barcode: '200001', emoji: '🍔', id: 'prod_3' }
-                ];
-                sampleProducts.forEach(p => this.insert('products', p));
-            }
+        if (this.getCollection('products').length === 0) {
+            const cats = this.getCollection('categories');
+            // Only add samples if we really are starting fresh
+            const sampleProducts = [
+                { name: 'قهوة عربية', price: 15, cost: 5, categoryId: cats[0]?.id, stock: 100, barcode: '100001', emoji: '☕', id: 'prod_1' },
+                { name: 'كابتشينو', price: 20, cost: 7, categoryId: cats[0]?.id, stock: 100, barcode: '100002', emoji: '☕', id: 'prod_2' },
+                { name: 'برجر كلاسيك', price: 35, cost: 15, categoryId: cats[1]?.id, stock: 30, barcode: '200001', emoji: '🍔', id: 'prod_3' }
+            ];
+            sampleProducts.forEach(p => this.insert('products', p));
         }
     }
+
 
     // Backup all data
     backupAll() {

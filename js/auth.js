@@ -76,8 +76,16 @@ const Auth = {
             }
         }
 
-        // 3. Fallback: If map is empty and no cache, try db.js default
-        if (select.options.length <= 1) { // only "Loading..." option
+        // 3. Fallback: Load from local DB (ares_pos_users)
+        if (select.options.length <= 1) {
+            const localUsers = db.getCollection('users');
+            if (localUsers.length > 0) {
+                this.populateUserDropdown(localUsers);
+            }
+        }
+
+        // 4. Emergency Fallback: If absolutely nothing exists
+        if (select.options.length <= 1) {
             // Ensure at least Admin exists
             if (select.options.length === 0 || select.value === "") {
                 const adminOpt = document.createElement('option');
