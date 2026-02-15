@@ -45,23 +45,12 @@ const App = {
 
     /* ── Apply Branding (name + logo everywhere) ── */
     applyBranding() {
-        console.log('[applyBranding] Running immediate call');
+        // Apply immediately
         if (window.Settings && Settings.applyShopName) {
             Settings.applyShopName();
         }
-        // Also apply after delays to catch any late renders
-        setTimeout(() => {
-            console.log('[applyBranding] Running 200ms delayed call');
-            if (window.Settings && Settings.applyShopName) {
-                Settings.applyShopName();
-            }
-        }, 200);
-        setTimeout(() => {
-            console.log('[applyBranding] Running 500ms delayed call');
-            if (window.Settings && Settings.applyShopName) {
-                Settings.applyShopName();
-            }
-        }, 500);
+        // One small delay to catch late renders if necessary, but 500ms loop is overkill.
+        // Better to rely on specific events (like screen changes) which we already do.
     },
 
     /* ── Real-time Updates ── */

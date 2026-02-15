@@ -14,7 +14,7 @@ const I18n = {
 
     translations: {
         // ── App & Navigation ──────────────────────────
-        app_name: { ar: 'ARES Casher Pro', en: 'ARES Casher Pro', ur: 'ARES Casher Pro' },
+        app_name: { ar: 'Cashiery', en: 'Cashiery', ur: 'Cashiery' },
         dashboard: { ar: 'لوحة التحكم', en: 'Dashboard', ur: 'ڈیش بورڈ' },
         pos: { ar: 'شاشة البيع', en: 'Point of Sale', ur: 'پوائنٹ آف سیل' },
         products: { ar: 'المنتجات', en: 'Products', ur: 'مصنوعات' },

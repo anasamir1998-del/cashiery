@@ -2449,3 +2449,26 @@ body.nav-topbar .content-body {
         margin: 0 !important;
     }
 }
+
+/* ── Utility Classes (Refactoring) ── */
+.disabled-card {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(100%);
+}
+
+.hidden-element {
+    display: none !important;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.h-full {
+    height: 100%;
+}
+
+.object-cover {
+    object-fit: cover;
+}

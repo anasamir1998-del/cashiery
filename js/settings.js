@@ -25,8 +25,8 @@ const Settings = {
     },
 
     applyShopName() {
-        const name = db.getSetting('company_name', 'ARES');
-        const nameEn = db.getSetting('company_name_en', 'Casher Pro');
+        const name = db.getSetting('company_name', 'Cashiery');
+        const nameEn = db.getSetting('company_name_en', 'Pro');
         const logo = db.getSetting('company_logo', '');
 
         console.log('[applyShopName] name:', name, '| nameEn:', nameEn, '| logo:', logo ? '(has logo)' : '(no logo)');
@@ -84,11 +84,23 @@ const Settings = {
     },
 
     switchTab(btn, tab) {
+        // Force clear/update active class
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active'); // btn might be null if called programmatically
+
         const container = document.getElementById('settings-content');
+        if (!container) return;
+
         switch (tab) {
             case 'company': container.innerHTML = this.renderCompanySettings(); break;
+            case 'branches':
+                try {
+                    container.innerHTML = this.renderBranchSettings();
+                } catch (e) {
+                    console.error('Error rendering branches:', e);
+                    container.innerHTML = `<div class="error">Error: ${e.message}</div>`;
+                }
+                break;
             case 'tax': container.innerHTML = this.renderTaxSettings(); break;
             case 'users': container.innerHTML = this.renderUserManagement(); break;
             case 'appearance': container.innerHTML = this.renderAppearanceSettings(); this.initInvoicePreviewListeners(); break;
@@ -99,52 +111,63 @@ const Settings = {
     },
 
     renderBranchSettings() {
-        const branches = db.getCollection('branches');
+        const branches = db.getCollection('branches') || [];
+        if (!Array.isArray(branches)) {
+            console.error('Branches collection is not an array!');
+            return '<div class="error">Error loading branches</div>';
+        }
 
         let html = `
-            <div class="settings-card">
-                <div class="card-header">
+            <div class="glass-card p-24">
+                <div class="flex justify-between items-center mb-24">
                     <h3>🏘️ ${t('branch_management')}</h3>
                     <button class="btn btn-primary" onclick="Settings.showAddBranchModal()">
                         <i class="fas fa-plus"></i> ${t('add_branch')}
                     </button>
                 </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>${t('branch_name')}</th>
-                                    <th>${t('branch_phone')}</th>
-                                    <th>${t('branch_address')}</th>
-                                    <th>${t('status')}</th>
-                                    <th>${t('actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                
+                <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>${t('branch_name')}</th>
+                                <th>${t('branch_phone')}</th>
+                                <th>${t('branch_address')}</th>
+                                <th>${t('status')}</th>
+                                <th>${t('actions')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
         `;
 
         // Render Rows
         if (branches.length === 0) {
-            html += `<tr><td colspan="5" style="text-align:center;">${t('no_data')}</td></tr>`;
+            html += `<tr><td colspan="5" style="text-align:center; padding: 24px;">${t('no_data')}</td></tr>`;
         } else {
             branches.forEach(branch => {
-                const isMain = branch.isMain ? `<span class="badge badge-success">${t('main_branch')}</span>` : '';
+                const isMain = branch.isMain ? `<span class="badge badge-accent">${t('main_branch')}</span>` : '';
                 const active = branch.active ? `<span class="badge badge-success">${t('active')}</span>` : `<span class="badge badge-danger">${t('inactive')}</span>`;
 
                 html += `
                     <tr>
                         <td>
-                            <strong>${branch.name}</strong>
-                            ${isMain}
+                            <div class="flex items-center gap-2">
+                                <div class="avatar-sm" style="background:var(--bg-glass); width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+                                    ${branch.isMain ? '🏢' : '🏘️'}
+                                </div>
+                                <div>
+                                    <div class="font-bold">${Utils.escapeHTML(branch.name)}</div>
+                                    ${isMain}
+                                </div>
+                            </div>
                         </td>
-                        <td>${branch.phone || '-'}</td>
-                        <td>${branch.address || '-'}</td>
+                        <td style="font-family:Inter; opacity:0.8;">${Utils.escapeHTML(branch.phone || '-')}</td>
+                        <td style="opacity:0.8;">${Utils.escapeHTML(branch.address || '-')}</td>
                         <td>${active}</td>
                         <td>
-                            <div class="action-buttons">
-                                <button class="btn-icon" onclick="Settings.editBranch('${branch.id}')" title="${t('edit')}">✏️</button>
-                                ${!branch.isMain ? `<button class="btn-icon delete" onclick="Settings.deleteBranch('${branch.id}')" title="${t('delete')}">🗑️</button>` : ''}
+                            <div class="flex gap-2">
+                                <button class="btn btn-ghost btn-sm" onclick="Settings.editBranch('${branch.id}')" title="${t('edit')}">✏️</button>
+                                ${!branch.isMain ? `<button class="btn btn-ghost btn-sm text-danger" onclick="Settings.deleteBranch('${branch.id}')" title="${t('delete')}">🗑️</button>` : ''}
                             </div>
                         </td>
                     </tr>
@@ -153,96 +176,108 @@ const Settings = {
         }
 
         html += `
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         `;
         return html;
     },
 
-    showAddBranchModal() {
-        const modalId = 'add-branch-modal';
-        let modal = document.getElementById(modalId);
+    showAddBranchModal(editId = null) {
+        let branch = { name: '', phone: '', address: '', isMain: false };
+        let title = t('add_branch');
+        let btnText = t('save');
 
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = modalId;
-            modal.className = 'modal';
-            document.body.appendChild(modal);
+        if (editId) {
+            const b = db.getById('branches', editId);
+            if (b) {
+                branch = b;
+                title = t('edit_branch');
+                btnText = t('update');
+            }
         }
 
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>${t('add_branch')}</h2>
-                    <span class="close" onclick="document.getElementById('${modalId}').style.display='none'">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>${t('branch_name')} *</label>
-                        <input type="text" id="branch-name" class="form-control" placeholder="${t('branch_name')}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('branch_phone')}</label>
-                        <input type="text" id="branch-phone" class="form-control" placeholder="${t('branch_phone')}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('branch_address')}</label>
-                        <input type="text" id="branch-address" class="form-control" placeholder="${t('branch_address')}">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="document.getElementById('${modalId}').style.display='none'">${t('cancel')}</button>
-                    <button class="btn btn-primary" onclick="Settings.saveBranch()">${t('save')}</button>
+        const html = `
+            <div class="form-group mb-16">
+                <label class="block mb-8 font-bold">${t('branch_name')} <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-icon">🏢</span>
+                    <input type="text" id="branch-name" class="form-control" value="${Utils.escapeHTML(branch.name)}" placeholder="${t('branch_name')}">
                 </div>
             </div>
-        `;
 
-        modal.style.display = 'block';
-        document.getElementById('branch-name').focus();
+    <div class="grid-2 gap-16 mb-16">
+        <div class="form-group">
+            <label class="block mb-8 font-bold">${t('branch_phone')}</label>
+            <div class="input-group">
+                <span class="input-icon">📞</span>
+                <input type="text" id="branch-phone" class="form-control" value="${Utils.escapeHTML(branch.phone || '')}" placeholder="${t('branch_phone')}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="block mb-8 font-bold">${t('branch_address')}</label>
+            <div class="input-group">
+                <span class="input-icon">📍</span>
+                <input type="text" id="branch-address" class="form-control" value="${Utils.escapeHTML(branch.address || '')}" placeholder="${t('branch_address')}">
+            </div>
+        </div>
+    </div>
+
+            ${!branch.isMain ? `
+            <div class="form-group glass-card p-16 mb-16 flex justify-between items-center">
+                <div>
+                    <label class="font-bold block">${t('status')}</label>
+                    <small class="text-muted">${t('branch_status_desc')}</small>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="branch-active" ${branch.active !== false ? 'checked' : ''}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            ` : ''
+            }
+`;
+
+        Modal.show(title, html, `
+            <button class="btn btn-primary" onclick="Settings.saveBranch('${editId || ''}')">${btnText}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+        `);
     },
 
     editBranch(id) {
-        const branches = db.getCollection('branches');
-        const branch = branches.find(b => b.id === id);
-        if (!branch) return;
-
-        this.showAddBranchModal(); // Re-use modal structure
-
-        // Update Modal Title and Button
-        const modal = document.getElementById('add-branch-modal');
-        modal.querySelector('.modal-header h2').textContent = t('edit_branch');
-        modal.querySelector('.modal-footer .btn-primary').onclick = () => Settings.saveBranch(id);
-
-        // Fill Data
-        document.getElementById('branch-name').value = branch.name;
-        document.getElementById('branch-phone').value = branch.phone || '';
-        document.getElementById('branch-address').value = branch.address || '';
+        this.showAddBranchModal(id);
     },
 
-    saveBranch(editId = null) {
+    saveBranch(editId) {
         const name = document.getElementById('branch-name').value.trim();
         const phone = document.getElementById('branch-phone').value.trim();
         const address = document.getElementById('branch-address').value.trim();
+        const activeCheckbox = document.getElementById('branch-active');
+        const isActive = activeCheckbox ? activeCheckbox.checked : true; // Default true if no checkbox (Main Branch)
 
         if (!name) {
-            Toast.show(t('warning'), t('enter_name_username'), 'warning'); // Reuse message
+            Toast.show(t('warning'), t('enter_branch_name'), 'warning');
             return;
         }
 
-        let branches = db.getCollection('branches');
+        let branches = db.getCollection('branches') || [];
 
-        if (editId) {
+        if (editId && editId !== 'null' && editId !== '') {
             // Edit
             const index = branches.findIndex(b => b.id === editId);
             if (index !== -1) {
                 branches[index].name = name;
                 branches[index].phone = phone;
                 branches[index].address = address;
-                db.setCollection('branches', branches);
-                Toast.show(t('success'), t('branch_edited'), 'success');
+
+                // Prevent deactivating Main Branch
+                if (!branches[index].isMain) {
+                    branches[index].active = isActive;
+                }
+
+                db.setCollection('branches', branches); // Use saveCollection if available, or update entire collection
+                Toast.show(t('success'), t('branch_updated'), 'success');
             }
         } else {
             // Add
@@ -251,7 +286,7 @@ const Settings = {
                 name: name,
                 phone: phone,
                 address: address,
-                active: true,
+                active: isActive,
                 isMain: false
             };
             branches.push(newBranch);
@@ -259,25 +294,44 @@ const Settings = {
             Toast.show(t('success'), t('branch_added'), 'success');
         }
 
-        document.getElementById('add-branch-modal').style.display = 'none';
-        // Refresh Tab
-        document.querySelector('.tab-btn.active[onclick*="branches"]').click();
+        Modal.hide();
+
+        // Refresh list
+        const container = document.getElementById('settings-content');
+        if (container) {
+            container.innerHTML = this.renderBranchSettings();
+        }
+
+        // Refresh header if current branch was updated
+        const currentBranchId = Auth.getBranchId();
+        if (editId === currentBranchId) {
+            App.updateUserInfo();
+        }
     },
 
-    deleteBranch(id) {
-        if (!confirm(t('confirm_delete_branch'))) return;
 
+    deleteBranch(id) {
+        Modal.show(t('confirm'), t('confirm_delete_branch'), `
+            <button class="btn btn-danger" onclick="Settings.performDeleteBranch('${id}')">${t('yes_delete')}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+        `);
+    },
+
+    performDeleteBranch(id) {
         // Prevent deleting main branch (extra safety)
         const branches = db.getCollection('branches');
         const branch = branches.find(b => b.id === id);
         if (branch && branch.isMain) {
             Toast.show(t('error'), t('not_allowed'), 'error');
+            Modal.hide();
             return;
         }
 
         db.delete('branches', id);
         Toast.show(t('success'), t('branch_deleted'), 'success');
-        document.querySelector('.tab-btn.active[onclick*="branches"]').click();
+        Modal.hide();
+        // Refresh specific tab
+        this.switchTab(document.querySelector('.tab-btn.active[onclick*="branches"]'), 'branches');
     },
 
     renderCompanySettings() {
@@ -286,7 +340,7 @@ const Settings = {
             <div class="glass-card p-24">
                 <h3 style="margin-bottom: 20px;">🏢 ${t('company_info')}</h3>
                 
-                <!-- Logo Upload -->
+                <!--Logo Upload-->
                 <div class="form-group" style="text-align:center; margin-bottom:24px;">
                     <label style="display:block; margin-bottom:8px;">${t('company_logo')}</label>
                     <div class="image-upload-area" style="width:100px; height:100px; margin:0 auto;" onclick="document.getElementById('logo-input').click()">
@@ -302,15 +356,20 @@ const Settings = {
                         <input type="text" class="form-control" id="s-company-name" value="${db.getSetting('company_name', '')}">
                     </div>
                     <div class="form-group">
-                        <label>${t('vat_number')} (VAT Number)</label>
-                        <input type="text" class="form-control" id="s-vat-number" value="${db.getSetting('vat_number', '')}" style="direction:ltr;" placeholder="3xxxxxxxxxxxxxxx">
+                        <label>${t('company_name_en')}</label>
+                        <input type="text" class="form-control" id="s-company-name-en" value="${db.getSetting('company_name_en', '')}" style="direction:ltr;">
                     </div>
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
+                        <label>${t('vat_number')} (VAT Number)</label>
+                        <input type="text" class="form-control" id="s-vat-number" value="${db.getSetting('vat_number', '')}" style="direction:ltr;" placeholder="3xxxxxxxxxxxxxxx">
+                    </div>
+                    <div class="form-group">
                         <label>${t('cr_number')} (CR Number)</label>
                         <input type="text" class="form-control" id="s-cr-number" value="${db.getSetting('cr_number', '')}" style="direction:ltr;">
                     </div>
+                </div>
                     <div class="form-group">
                         <label>${t('phone')}</label>
                         <input type="text" class="form-control" id="s-phone" value="${db.getSetting('company_phone', '')}" style="direction:ltr;">
@@ -323,13 +382,13 @@ const Settings = {
 
                 <button class="btn btn-primary" onclick="Settings.saveCompany()">💾 ${t('save_data')}</button>
                 
-                <!-- Preview -->
+                <!--Preview -->
                 <div style="margin-top:24px; border-top:1px solid var(--border-color); padding-top:16px;">
                     <h4 style="margin-bottom:12px; font-size:14px; color:var(--text-muted);">👁️ ${t('report_header_preview')}:</h4>
                     ${App.getCompanyBrandHTML()}
                 </div>
             </div>
-        `;
+    `;
     },
 
     handleLogoUpload(event) {
@@ -359,7 +418,7 @@ const Settings = {
 
     saveCompany() {
         db.setSetting('company_name', document.getElementById('s-company-name').value.trim());
-        // db.setSetting('company_name_en', document.getElementById('s-company-name-en').value.trim()); // Removed
+        db.setSetting('company_name_en', document.getElementById('s-company-name-en').value.trim());
 
         db.setSetting('vat_number', document.getElementById('s-vat-number').value.trim());
         db.setSetting('cr_number', document.getElementById('s-cr-number').value.trim());
@@ -493,7 +552,7 @@ const Settings = {
                     <button class="btn btn-primary" onclick="Settings.saveInvoiceSettings()">💾 ${t('save_changes')}</button>
                 </div>
             </div>
-        `;
+    `;
     },
 
     saveInvoiceSettings() {
@@ -541,7 +600,7 @@ const Settings = {
                 </div>
                 <button class="btn btn-primary" onclick="Settings.saveTax()">💾 ${t('save_tax_settings')}</button>
             </div>
-        `;
+    `;
     },
 
     saveTax() {
@@ -570,27 +629,27 @@ const Settings = {
                     </thead>
                     <tbody>
                         ${users.map(u => `
-                        <tr>
-                            <td><strong>${Utils.escapeHTML(u.name)}</strong></td>
-                            <td style="font-family:Inter;">${u.username}</td>
-                            <td><span class="badge ${u.role === 'مدير' ? 'badge-accent' : u.role === 'مشرف' ? 'badge-warning' : 'badge-info'}">${t('role_' + (u.role === 'مدير' ? 'admin' : u.role === 'مشرف' ? 'supervisor' : 'cashier'))}</span></td>
-                            <td><span class="badge ${u.active !== false ? 'badge-success' : 'badge-danger'}">${u.active !== false ? t('active') : t('disabled')}</span></td>
-                            <td>
-                                <button class="btn btn-ghost btn-sm" onclick="Settings.editUser('${u.id}')" title="${t('edit')}">✏️</button>
-                                <button class="btn btn-ghost btn-sm" onclick="Settings.editPermissions('${u.id}')" title="${t('permissions')}">🔑</button>
-                                ${u.username !== 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="Settings.toggleUser('${u.id}')">${u.active !== false ? '🔒' : '🔓'}</button>` : ''}
-                            </td>
-                        </tr>`).join('')}
+                                <tr>
+                                    <td><strong>${Utils.escapeHTML(u.name)}</strong></td>
+                                    <td style="font-family:Inter;">${u.username}</td>
+                                    <td><span class="badge ${u.role === 'مدير' ? 'badge-accent' : u.role === 'مشرف' ? 'badge-warning' : 'badge-info'}">${t('role_' + (u.role === 'مدير' ? 'admin' : u.role === 'مشرف' ? 'supervisor' : 'cashier'))}</span></td>
+                                    <td><span class="badge ${u.active !== false ? 'badge-success' : 'badge-danger'}">${u.active !== false ? t('active') : t('disabled')}</span></td>
+                                    <td>
+                                        <button class="btn btn-ghost btn-sm" onclick="Settings.editUser('${u.id}')" title="${t('edit')}">✏️</button>
+                                        <button class="btn btn-ghost btn-sm" onclick="Settings.editPermissions('${u.id}')" title="${t('permissions')}">🔑</button>
+                                        ${u.username !== 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="Settings.toggleUser('${u.id}')">${u.active !== false ? '🔒' : '🔓'}</button>` : ''}
+                                    </td>
+                                </tr>`).join('')}
                     </tbody>
                 </table>
             </div>
-        `;
+    `;
     },
 
     showAddUser(user = null) {
         const isEdit = !!user;
-        Modal.show(isEdit ? `✏️ ${t('edit_user')}` : `➕ ${t('add_user')}`, `
-            <div class="form-group">
+        Modal.show(isEdit ? `✏️ ${t('edit_user')} ` : `➕ ${t('add_user')} `, `
+    < div class="form-group" >
                 <label>${t('full_name')}</label>
                 <input type="text" class="form-control" id="u-name" value="${user ? Utils.escapeHTML(user.name) : ''}">
             </div>
@@ -615,10 +674,10 @@ const Settings = {
             <div class="glass-card p-20" style="background:var(--info-bg); border-color:rgba(0,180,216,0.2);">
                 <p style="font-size:12px; color:var(--info);">💡 ${t('permissions_hint')}</p>
             </div>
-        `, `
-            <button class="btn btn-primary" onclick="Settings.saveUser(${isEdit ? `'${user.id}'` : 'null'})">${isEdit ? t('save_changes') : t('add')}</button>
-            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
-        `);
+`, `
+    < button class="btn btn-primary" onclick = "Settings.saveUser(${isEdit ? `'${user.id}'` : 'null'})" > ${isEdit ? t('save_changes') : t('add')}</button >
+        <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+`);
     },
 
     saveUser(id) {
@@ -685,32 +744,32 @@ const Settings = {
         });
 
         let html = `
-            <div class="mb-16">
-                <strong>${Utils.escapeHTML(user.name)}</strong> — 
-                <span class="badge ${user.role === 'مدير' ? 'badge-accent' : user.role === 'مشرف' ? 'badge-warning' : 'badge-info'}">${t('role_' + (user.role === 'مدير' ? 'admin' : user.role === 'مشرف' ? 'supervisor' : 'cashier'))}</span>
-            </div>
-        `;
+    < div class="mb-16" >
+        <strong>${Utils.escapeHTML(user.name)}</strong> —
+<span class="badge ${user.role === 'مدير' ? 'badge-accent' : user.role === 'مشرف' ? 'badge-warning' : 'badge-info'}">${t('role_' + (user.role === 'مدير' ? 'admin' : user.role === 'مشرف' ? 'supervisor' : 'cashier'))}</span>
+            </div >
+    `;
 
         for (const [group, perms] of Object.entries(groups)) {
-            html += `<h4 style="margin:16px 0 8px; font-size:14px; color:var(--text-muted);">${group}</h4>`;
-            html += `<div class="permission-grid">`;
+            html += `< h4 style = "margin:16px 0 8px; font-size:14px; color:var(--text-muted);" > ${group}</h4 > `;
+            html += `< div class="permission-grid" > `;
             perms.forEach(p => {
                 const checked = effectivePerms.includes(p.key) ? 'checked' : '';
                 html += `
-                    <div class="permission-item">
-                        <input type="checkbox" id="perm-${p.key}" data-perm="${p.key}" ${checked}>
-                        <label for="perm-${p.key}">${p.label}</label>
-                    </div>
-                `;
+    < div class="permission-item" >
+        <input type="checkbox" id="perm-${p.key}" data-perm="${p.key}" ${checked}>
+            <label for="perm-${p.key}">${p.label}</label>
+        </div>
+`;
             });
-            html += `</div>`;
+            html += `</div > `;
         }
 
-        Modal.show(`🔑 ${t('permissions')}: ${user.name}`, html, `
-            <button class="btn btn-primary" onclick="Settings.savePermissions('${userId}')">💾 ${t('save_permissions')}</button>
+        Modal.show(`🔑 ${t('permissions')}: ${user.name} `, html, `
+    < button class="btn btn-primary" onclick = "Settings.savePermissions('${userId}')" >💾 ${t('save_permissions')}</button >
             <button class="btn btn-ghost" onclick="Settings.resetPermissions('${userId}')">🔄 ${t('reset_default')}</button>
             <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
-        `, { wide: true });
+`, { wide: true });
     },
 
     savePermissions(userId) {
@@ -756,7 +815,7 @@ const Settings = {
         const getVal = (key, def) => db.getSetting(key, def);
 
         return `
-            <!-- Theme Section -->
+            <!--Theme Section-->
             <div class="glass-card p-24 mb-20">
                 <h3 style="margin-bottom:20px;">🎨 ${t('appearance_settings')}</h3>
                 
@@ -780,15 +839,15 @@ const Settings = {
                 </div>
             </div>
 
-            <!-- Invoice Appearance Section -->
+            <!--Invoice Appearance Section-->
             <div class="glass-card p-24">
                 <h3 style="margin-bottom:20px;">🧾 ${t('invoice_appearance')}</h3>
-                
+
                 <div class="grid-2">
                     <!-- Header Section -->
                     <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
                         <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_header')}</h4>
-                        
+
                         <div class="form-check form-switch mb-10">
                             <input class="form-check-input" type="checkbox" id="inv_show_logo" ${getBool('inv_show_logo') ? 'checked' : ''}>
                             <label class="form-check-label" for="inv_show_logo">${t('show_logo')}</label>
@@ -814,7 +873,7 @@ const Settings = {
                     <!-- Details Section -->
                     <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
                         <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_details')}</h4>
-                        
+
                         <div class="form-check form-switch mb-10">
                             <input class="form-check-input" type="checkbox" id="inv_show_cashier" ${getBool('inv_show_cashier') ? 'checked' : ''}>
                             <label class="form-check-label" for="inv_show_cashier">${t('show_cashier')}</label>
@@ -842,12 +901,12 @@ const Settings = {
                     <!-- QR / Barcode Section -->
                     <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
                         <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">📱 ${t('show_qr')}</h4>
-                        
+
                         <div class="form-check form-switch mb-10">
                             <input class="form-check-input" type="checkbox" id="inv_show_qr" ${getBool('inv_show_qr') ? 'checked' : ''}>
                             <label class="form-check-label" for="inv_show_qr">${t('show_qr')}</label>
                         </div>
-                        
+
                         <div class="form-group mt-10">
                             <label>${t('qr_position')}</label>
                             <select class="form-control" id="inv_qr_position">
@@ -855,7 +914,7 @@ const Settings = {
                                 <option value="top" ${getVal('inv_qr_position', 'bottom') === 'top' ? 'selected' : ''}>${t('qr_top')}</option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group mt-10">
                             <label>${t('qr_align')}</label>
                             <select class="form-control" id="inv_qr_align">
@@ -869,12 +928,12 @@ const Settings = {
                     <!-- Footer & Layout -->
                     <div class="glass-card p-20 mb-20" style="border-color:var(--border-color);">
                         <h4 style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;">${t('inv_footer')} & ${t('inv_layout')}</h4>
-                        
+
                         <div class="form-check form-switch mb-10">
                             <input class="form-check-input" type="checkbox" id="inv_show_footer" ${getBool('inv_show_footer') ? 'checked' : ''}>
                             <label class="form-check-label" for="inv_show_footer">${t('show_footer')}</label>
                         </div>
-                        
+
                         <div class="form-group mb-10">
                             <label>${t('footer_text')}</label>
                             <input type="text" class="form-control" id="inv_footer_text" value="${getVal('inv_footer_text', t('thank_you') || 'Thank you')}">
@@ -912,14 +971,14 @@ const Settings = {
                     </div>
                 </div>
             </div>
-        `;
+    `;
     },
 
     setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('ares_theme', theme);
         App.updateThemeIcon(theme);
-        Toast.show(t('appearance'), theme === 'light' ? `☀️ ${t('light_mode_activated')}` : `🌙 ${t('dark_mode_activated')}`, 'info', 2000);
+        Toast.show(t('appearance'), theme === 'light' ? `☀️ ${t('light_mode_activated')} ` : `🌙 ${t('dark_mode_activated')} `, 'info', 2000);
         document.getElementById('settings-content').innerHTML = this.renderAppearanceSettings();
         this.initInvoicePreviewListeners();
     },
@@ -984,30 +1043,30 @@ const Settings = {
         const pw = paperWidth === '58mm' ? '220px' : '300px';
 
         const sep = '<hr style="border:none;border-top:1px dashed #999;margin:6px 0;">';
-        const qrBlock = showQr ? `<div style="text-align:${qrAlign};margin:6px 0;"><div style="display:inline-block;width:80px;height:80px;border:2px solid #333;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#666;">QR Code</div></div>` : '';
+        const qrBlock = showQr ? `< div style = "text-align:${qrAlign};margin:6px 0;" > <div style="display:inline-block;width:80px;height:80px;border:2px solid #333;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#666;">QR Code</div></div > ` : '';
 
-        let html = `<div style="font-size:${fs};max-width:${pw};margin:0 auto;line-height:1.5;">`;
+        let html = `< div style = "font-size:${fs};max-width:${pw};margin:0 auto;line-height:1.5;" > `;
 
         // Header
         html += '<div style="text-align:center;">';
-        if (showLogo && logo) html += `<img src="${logo}" style="width:40px;height:40px;object-fit:contain;margin:0 auto 4px;display:block;border-radius:6px;">`;
+        if (showLogo && logo) html += `< img src = "${logo}" style = "width:40px;height:40px;object-fit:contain;margin:0 auto 4px;display:block;border-radius:6px;" > `;
         if (showLogo && !logo) html += '<div style="width:40px;height:40px;background:#eee;border-radius:6px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:18px;">🏢</div>';
-        if (showName) html += `<div style="font-weight:800;font-size:1.1em;">${Utils.escapeHTML(companyName)}</div>`;
-        if (showName && companyNameEn) html += `<div style="font-size:0.85em;color:#666;">${Utils.escapeHTML(companyNameEn)}</div>`;
-        if (showAddr && companyAddress) html += `<div style="font-size:0.85em;color:#555;">${Utils.escapeHTML(companyAddress)}</div>`;
-        if (showPhone && companyPhone) html += `<div style="font-size:0.85em;color:#555;">📞 ${companyPhone}</div>`;
-        if (showVat && vatNumber) html += `<div style="font-size:0.85em;color:#555;">${t('vat_number')}: ${vatNumber}</div>`;
+        if (showName) html += `< div style = "font-weight:800;font-size:1.1em;" > ${Utils.escapeHTML(companyName)}</div > `;
+        if (showName && companyNameEn) html += `< div style = "font-size:0.85em;color:#666;" > ${Utils.escapeHTML(companyNameEn)}</div > `;
+        if (showAddr && companyAddress) html += `< div style = "font-size:0.85em;color:#555;" > ${Utils.escapeHTML(companyAddress)}</div > `;
+        if (showPhone && companyPhone) html += `< div style = "font-size:0.85em;color:#555;" >📞 ${companyPhone}</div > `;
+        if (showVat && vatNumber) html += `< div style = "font-size:0.85em;color:#555;" > ${t('vat_number')}: ${vatNumber}</div > `;
         html += '</div>';
 
         html += sep;
-        html += `<div style="text-align:center;font-weight:700;">${t('simplified_tax_invoice') || 'فاتورة ضريبية مبسطة'}</div>`;
+        html += `< div style = "text-align:center;font-weight:700;" > ${t('simplified_tax_invoice') || 'فاتورة ضريبية مبسطة'}</div > `;
         html += sep;
 
         // Invoice info
-        html += `<div style="display:flex;justify-content:space-between;"><span>${t('invoice_number')}:</span><span style="font-weight:700;">INV-001</span></div>`;
-        html += `<div style="display:flex;justify-content:space-between;"><span>${t('date')}:</span><span>2026/02/14 12:00</span></div>`;
-        if (showCashier) html += `<div style="display:flex;justify-content:space-between;"><span>${t('cashier')}:</span><span>أحمد</span></div>`;
-        if (showCustomer) html += `<div style="display:flex;justify-content:space-between;"><span>${t('customer')}:</span><span>عميل عام</span></div>`;
+        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('invoice_number')}:</span><span style="font-weight:700;">INV-001</span></div > `;
+        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('date')}:</span><span>2026/02/14 12:00</span></div > `;
+        if (showCashier) html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('cashier')}:</span><span>أحمد</span></div > `;
+        if (showCustomer) html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('customer')}:</span><span>عميل عام</span></div > `;
 
         // QR Top
         if (qrPos === 'top') html += qrBlock;
@@ -1015,27 +1074,27 @@ const Settings = {
         html += sep;
 
         // Items
-        html += `<div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;">
+        html += `< div style = "display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;" >
             <span style="width:40%;">${t('product') || 'المنتج'}</span>
             <span style="width:15%;text-align:center;">${t('qty') || 'الكمية'}</span>
             <span style="width:20%;text-align:left;">${t('price') || 'السعر'}</span>
             <span style="width:25%;text-align:left;">${t('total') || 'الإجمالي'}</span>
-        </div>`;
-        html += `<div style="display:flex;justify-content:space-between;font-size:0.9em;"><span style="width:40%;">قهوة عربية</span><span style="width:15%;text-align:center;">2</span><span style="width:20%;text-align:left;">15.00</span><span style="width:25%;text-align:left;font-weight:700;">30.00</span></div>`;
-        html += `<div style="display:flex;justify-content:space-between;font-size:0.9em;"><span style="width:40%;">كيك شوكولاتة</span><span style="width:15%;text-align:center;">1</span><span style="width:20%;text-align:left;">25.00</span><span style="width:25%;text-align:left;font-weight:700;">25.00</span></div>`;
+        </div > `;
+        html += `< div style = "display:flex;justify-content:space-between;font-size:0.9em;" ><span style="width:40%;">قهوة عربية</span><span style="width:15%;text-align:center;">2</span><span style="width:20%;text-align:left;">15.00</span><span style="width:25%;text-align:left;font-weight:700;">30.00</span></div > `;
+        html += `< div style = "display:flex;justify-content:space-between;font-size:0.9em;" ><span style="width:40%;">كيك شوكولاتة</span><span style="width:15%;text-align:center;">1</span><span style="width:20%;text-align:left;">25.00</span><span style="width:25%;text-align:left;font-weight:700;">25.00</span></div > `;
 
         html += sep;
 
         // Totals
-        html += `<div style="display:flex;justify-content:space-between;"><span>${t('subtotal')}:</span><span>55.00 ${currency}</span></div>`;
-        if (showDiscount) html += `<div style="display:flex;justify-content:space-between;color:#c00;"><span>${t('discount')}:</span><span>-5.00 ${currency}</span></div>`;
-        html += `<div style="display:flex;justify-content:space-between;"><span>${t('vat')} (15%):</span><span>7.50 ${currency}</span></div>`;
-        html += `<div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.2em;border-top:2px solid #000;padding-top:4px;margin-top:4px;"><span>${t('grand_total')}:</span><span>57.50 ${currency}</span></div>`;
+        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('subtotal')}:</span><span>55.00 ${currency}</span></div > `;
+        if (showDiscount) html += `< div style = "display:flex;justify-content:space-between;color:#c00;" ><span>${t('discount')}:</span><span>-5.00 ${currency}</span></div > `;
+        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('vat')} (15%):</span><span>7.50 ${currency}</span></div > `;
+        html += `< div style = "display:flex;justify-content:space-between;font-weight:800;font-size:1.2em;border-top:2px solid #000;padding-top:4px;margin-top:4px;" ><span>${t('grand_total')}:</span><span>57.50 ${currency}</span></div > `;
 
-        if (showPayment) html += `<div style="display:flex;justify-content:space-between;margin-top:4px;"><span>${t('payment_method')}:</span><span>${t('cash_sales') || 'نقدي'}</span></div>`;
+        if (showPayment) html += `< div style = "display:flex;justify-content:space-between;margin-top:4px;" ><span>${t('payment_method')}:</span><span>${t('cash_sales') || 'نقدي'}</span></div > `;
         if (showPaidChange) {
-            html += `<div style="display:flex;justify-content:space-between;"><span>${t('amount_paid') || 'المبلغ المدفوع'}:</span><span>60.00 ${currency}</span></div>`;
-            html += `<div style="display:flex;justify-content:space-between;"><span>${t('change') || 'الباقي'}:</span><span>2.50 ${currency}</span></div>`;
+            html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('amount_paid') || 'المبلغ المدفوع'}:</span><span>60.00 ${currency}</span></div > `;
+            html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('change') || 'الباقي'}:</span><span>2.50 ${currency}</span></div > `;
         }
 
         // QR Bottom
@@ -1044,7 +1103,7 @@ const Settings = {
         // Footer
         if (showFooter) {
             html += sep;
-            html += `<div style="text-align:center;font-size:0.9em;color:#555;">${Utils.escapeHTML(footerText)}</div>`;
+            html += `< div style = "text-align:center;font-size:0.9em;color:#555;" > ${Utils.escapeHTML(footerText)}</div > `;
             html += '<div style="text-align:center;font-size:0.8em;color:#999;margin-top:2px;">ARES Casher Pro</div>';
         }
 
@@ -1056,13 +1115,13 @@ const Settings = {
     /* ── Keyboard Shortcuts ── */
     renderShortcuts() {
         const shortcuts = [
-            { key: 'F1', action: `🛒 ${t('pos')}` },
-            { key: 'F2', action: `📊 ${t('dashboard')}` },
-            { key: 'F3', action: `📦 ${t('product_management')}` },
-            { key: 'F4', action: `🧾 ${t('invoices')}` },
-            { key: 'F5', action: `📈 ${t('reports')}` },
-            { key: 'F7', action: `⏰ ${t('shifts')}` },
-            { key: 'Esc', action: `❌ ${t('close')}` },
+            { key: 'F1', action: `🛒 ${t('pos')} ` },
+            { key: 'F2', action: `📊 ${t('dashboard')} ` },
+            { key: 'F3', action: `📦 ${t('product_management')} ` },
+            { key: 'F4', action: `🧾 ${t('invoices')} ` },
+            { key: 'F5', action: `📈 ${t('reports')} ` },
+            { key: 'F7', action: `⏰ ${t('shifts')} ` },
+            { key: 'Esc', action: `❌ ${t('close')} ` },
         ];
 
         return `
@@ -1077,7 +1136,7 @@ const Settings = {
                     `).join('')}
                 </div>
             </div>
-        `;
+    `;
     },
 
     /* ── Backup ── */
@@ -1104,7 +1163,7 @@ const Settings = {
                     <button class="btn btn-danger" onclick="Settings.clearAllData()">🗑️ ${t('clear_data')}</button>
                 </div>
             </div>
-        `;
+    `;
     },
 
     exportData() {
@@ -1116,7 +1175,7 @@ const Settings = {
         };
         const filename = `ares_backup_${new Date().toISOString().split('T')[0]}.json`;
         Utils.exportJSON(data, filename);
-        Toast.show(t('success'), `${t('backup_exported')}: ${filename}`, 'success');
+        Toast.show(t('success'), `${t('backup_exported')}: ${filename} `, 'success');
     },
 
     async importData() {
@@ -1126,7 +1185,7 @@ const Settings = {
                 Toast.show(t('error'), t('invalid_backup'), 'error');
                 return;
             }
-            Modal.show(`⚠️ ${t('confirm_import')}`, `
+            Modal.show(`⚠️ ${t('confirm_import')} `, `
                 <p>${t('import_replace_warning')}</p>
                 <p style="color:var(--text-muted); font-size:13px; margin-top:8px;">${t('backup_date')}: ${Utils.formatDateTime(data._meta.exported)}</p>
             `, `
@@ -1146,7 +1205,7 @@ const Settings = {
     },
 
     clearAllData() {
-        Modal.show(`⛔ ${t('confirm_clear')}`, `
+        Modal.show(`⛔ ${t('confirm_clear')} `, `
             <p style="color: var(--danger);">${t('clear_confirm_msg')}</p>
             <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">${t('no_undo')}</p>
         `, `
@@ -1199,7 +1258,7 @@ const Settings = {
                     </div>
                 </div>
             </div>
-        `;
+    `;
     },
 
     async checkCloudConnection() {
@@ -1220,25 +1279,31 @@ const Settings = {
                 tested_by: Auth.currentUser ? Auth.currentUser.username : 'guest'
             });
 
-            statusText.innerHTML = `✅ ${t('connection_success') || 'Connected successfully to Firebase Cloud!'}`;
+            statusText.innerHTML = `✅ ${t('connection_success') || 'Connected successfully to Firebase Cloud!'} `;
             statusText.style.color = 'var(--success)';
             Toast.show('success', 'Connection success', 'success');
 
         } catch (e) {
             console.error(e);
-            statusText.innerHTML = `❌ ${t('connection_failed') || 'Connection failed'}: ${e.message}`;
+            statusText.innerHTML = `❌ ${t('connection_failed') || 'Connection failed'}: ${e.message} `;
             statusText.style.color = 'var(--danger)';
             Toast.show('error', 'Connection failed', 'error');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = `🔄 ${t('test_connection') || 'Test Connection'}`;
+            btn.innerHTML = `🔄 ${t('test_connection') || 'Test Connection'} `;
         }
     },
 
     async forceCloudUpload() {
-        if (!confirm(t('confirm_upload') || 'Are you sure? This will overwrite cloud data with your local data.')) return;
+        Modal.show(t('warning'), t('confirm_upload') || 'Are you sure? This will overwrite cloud data with your local data.', `
+            <button class="btn btn-warning" onclick="Settings.performForceUpload()">${t('yes_upload') || 'Yes, Upload'}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+        `);
+    },
 
-        const loadingToast = Toast.show('info', 'Uploading...', 'info', 10000);
+    async performForceUpload() {
+        Modal.hide();
+        Toast.show('info', 'Uploading...', 'info', 10000);
         try {
             await db.checkMigration(); // This function already handles uploading everything
             Toast.show('success', 'Upload completed!', 'success');
@@ -1246,19 +1311,27 @@ const Settings = {
             console.error(e);
             Toast.show('error', 'Upload failed: ' + e.message, 'error');
         }
-        // Remove loading toast if possible or let it expire
     },
 
     async forceCloudDownload() {
-        if (!confirm(t('confirm_download') || 'Are you sure? This will overwrite your LOCAL data with cloud data.')) return;
+        Modal.show(t('warning'), t('confirm_download') || 'Are you sure? This will overwrite your LOCAL data with cloud data.', `
+            <button class="btn btn-danger" onclick="Settings.performForceDownload()">${t('yes_download') || 'Yes, Download'}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+        `);
+    },
 
+    async performForceDownload() {
+        Modal.hide();
         Toast.show('info', 'Downloading...', 'info', 10000);
         try {
             // Re-use restore logic but from cloud
             const collections = ['products', 'categories', 'users', 'customers', 'sales', 'shifts', 'settings'];
+            const dbFirestore = window.dbFirestore;
+
+            if (!dbFirestore) throw new Error("Firestore not initialized");
 
             for (const col of collections) {
-                const snapshot = await window.dbFirestore.collection(col).get();
+                const snapshot = await dbFirestore.collection(col).get();
                 const data = snapshot.docs.map(doc => doc.data());
                 if (data.length > 0) {
                     db.setCollection(col, data);

@@ -1,6 +1,6 @@
 {
-    "name": "ARES Casher Pro",
-    "short_name": "Casher Pro",
+    "name": "Cashiery",
+    "short_name": "Cashiery",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#1a1a2e",

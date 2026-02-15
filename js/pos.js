@@ -124,7 +124,7 @@ const POS = {
                 ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md);">`
                 : (p.emoji || (isService ? '🛠️' : '📦'));
             return `
-            <div class="product-card" onclick="POS.addToCart('${p.id}')" ${outOfStock ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
+            <div class="product-card ${outOfStock ? 'disabled-card' : ''}" onclick="POS.addToCart('${p.id}')">
                 <div class="product-card-image">${productVisual}</div>
                 <h4>${Utils.escapeHTML(p.name)}</h4>
                 <div class="price">${Utils.formatSAR(p.price)}</div>
@@ -248,14 +248,22 @@ const POS = {
         if (this.cart.length === 0 && !this.editingInvoice) return;
 
         if (this.editingInvoice) {
-            if (!confirm(t('confirm') + '?')) return;
+            Modal.show(t('confirm'), t('confirm_clear_cart'), `
+                <button class="btn btn-danger" onclick="POS.performClearCart()">${t('yes_clear')}</button>
+                <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+            `);
+            return;
         }
+        this.performClearCart();
+    },
 
+    performClearCart() {
         this.cart = [];
         this.discountValue = 0;
         this.editingInvoice = null;
         this.refreshCart();
         App.playSound('beep');
+        Modal.hide();
     },
 
     refreshCart() {
@@ -575,20 +583,18 @@ const POS = {
         Toast.show(t('operation_done'), `${t('invoice_created')} ${invoiceNumber}`, 'success');
 
         // Show invoice option with receipt print
-        setTimeout(() => {
-            Modal.show(`🧾 ${t('sale_success')}`, `
-                <div style="text-align: center; padding: 20px;">
-                    <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
-                    <h3 style="margin-bottom: 8px;">${t('sale_success')}</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 4px;">${t('invoice_number')}: <strong>${invoiceNumber}</strong></p>
-                    <p style="color: var(--text-muted); margin-bottom: 24px;">${t('grand_total')}: <strong>${Utils.formatSAR(total)}</strong></p>
-                </div>
-            `, `
-                <button class="btn btn-primary" onclick="Invoices.viewInvoice('${sale.id}')">🧾 ${t('view_invoice')}</button>
-                <button class="btn btn-success" onclick="Invoices.printReceipt('${sale.id}')">🖨️ ${t('print_receipt')}</button>
-                <button class="btn btn-ghost" onclick="Invoices.printInvoice('${sale.id}')">📄 ${t('print_a4')}</button>
-                <button class="btn btn-ghost" onclick="Modal.hide(); POS.render();">${t('new_sale')}</button>
-            `);
-        }, 500);
+        Modal.show(`🧾 ${t('sale_success')}`, `
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                <h3 style="margin-bottom: 8px;">${t('sale_success')}</h3>
+                <p style="color: var(--text-muted); margin-bottom: 4px;">${t('invoice_number')}: <strong>${invoiceNumber}</strong></p>
+                <p style="color: var(--text-muted); margin-bottom: 24px;">${t('grand_total')}: <strong>${Utils.formatSAR(total)}</strong></p>
+            </div>
+        `, `
+            <button class="btn btn-primary" onclick="Invoices.viewInvoice('${sale.id}')">🧾 ${t('view_invoice')}</button>
+            <button class="btn btn-success" onclick="Invoices.printReceipt('${sale.id}')">🖨️ ${t('print_receipt')}</button>
+            <button class="btn btn-ghost" onclick="Invoices.printInvoice('${sale.id}')">📄 ${t('print_a4')}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide(); POS.render();">${t('new_sale')}</button>
+        `);
     }
 };

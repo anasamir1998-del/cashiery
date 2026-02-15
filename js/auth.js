@@ -220,8 +220,9 @@ const Auth = {
         // Let's assume Main Branch (ID: 'branch_main' or first available)
         if (!this.isAdmin() && !this.currentUser.branchId) {
             // Try to find Main Branch
-            const mainBranch = db.getCollection('branches').find(b => b.isMain);
-            return mainBranch ? mainBranch.id : (db.getCollection('branches')[0]?.id || null);
+            const branches = db.getCollection('branches') || [];
+            const mainBranch = branches.find(b => b.isMain);
+            return mainBranch ? mainBranch.id : (branches[0]?.id || null);
         }
 
         return this.currentUser.branchId || null;

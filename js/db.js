@@ -13,7 +13,7 @@ class Database {
             this.syncCollections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases'];
 
             // Initial checks
-            this.checkMigration();
+            // this.checkMigration(); // Disabled to prevent auto-reset loop
             this.startListeners();
         }
     }
@@ -91,6 +91,19 @@ class Database {
                     const docData = change.doc.data();
                     const idx = localData.findIndex(item => item.id === docData.id);
 
+                    // Conflict Resolution: Trust Cloud only if it's newer
+                    if (idx > -1) {
+                        const localItem = localData[idx];
+                        if (localItem.updatedAt && docData.updatedAt) {
+                            const localTime = new Date(localItem.updatedAt).getTime();
+                            const cloudTime = new Date(docData.updatedAt).getTime();
+                            if (localTime >= cloudTime) {
+                                console.log(`[Sync] Ignoring older cloud update for ${docData.id}`);
+                                return; // Skip this change
+                            }
+                        }
+                    }
+
                     if (change.type === "added") {
                         if (idx === -1) {
                             localData.push(docData);
@@ -102,7 +115,6 @@ class Database {
                             localData[idx] = docData;
                             changed = true;
                         } else {
-                            // If modified but we don't have it (maybe deleted locally?), add it
                             localData.push(docData);
                             changed = true;
                         }
@@ -245,9 +257,10 @@ class Database {
         let newItem;
         if (index >= 0) {
             settings[index].value = value;
+            settings[index].updatedAt = Utils.isoDate(); // Add Timestamp
             newItem = settings[index];
         } else {
-            newItem = { key, value, id: key }; // use key as ID for settings
+            newItem = { key, value, id: key, updatedAt: Utils.isoDate() }; // Add Timestamp
             settings.push(newItem);
         }
 
@@ -313,17 +326,25 @@ class Database {
         }
 
         const settings = this.getCollection('settings');
-        const hasInit = settings.find(s => s.key === '_initialized');
-        if (!hasInit) {
-            this.setSetting('company_name', 'ARES Casher Pro');
-            this.setSetting('company_name_en', 'ARES Casher Pro');
-            this.setSetting('vat_number', '300000000000003');
-            this.setSetting('cr_number', '1010000000');
-            this.setSetting('company_address', 'الرياض، المملكة العربية السعودية');
-            this.setSetting('company_phone', '+966 50 000 0000');
-            this.setSetting('vat_rate', '15');
-            this.setSetting('currency', 'ر.س');
-            this.setSetting('invoice_counter', '0');
+        // Helper to set default if missing
+        const setDefault = (key, value) => {
+            if (!settings.find(s => s.key === key)) {
+                this.setSetting(key, value);
+            }
+        };
+
+        setDefault('company_name', 'Cashiery');
+        setDefault('company_name_en', 'Cashiery Pro');
+        setDefault('vat_number', '300000000000003');
+        setDefault('cr_number', '1010000000');
+        setDefault('company_address', 'الرياض، المملكة العربية السعودية');
+        setDefault('company_phone', '+966 50 000 0000');
+        setDefault('vat_rate', '15');
+        setDefault('currency', 'ر.س');
+        setDefault('invoice_counter', '0');
+
+        // Always ensure _initialized is true
+        if (!settings.find(s => s.key === '_initialized')) {
             this.setSetting('_initialized', 'true');
         }
 

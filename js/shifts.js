@@ -48,11 +48,10 @@ const Shifts = {
                 }
             }
 
-            // Emergency Reset Button (Temporary for debugging/recovery)
             const debugControls = `
-                <div style="margin-bottom: 20px; text-align: right; opacity: 0.5; hover:opacity: 1;">
-                    <button class="btn btn-sm btn-ghost" onclick="Shifts.hardReset()" title="اضغط هنا لو الصفحة معلقة">
-                        🛠️ إصلاح
+                <div style="margin-bottom: 20px; text-align: right; opacity: 0.5;">
+                    <button class="btn btn-sm btn-ghost" onclick="Shifts.hardReset()" title="${t('fix_stuck_page') || 'Fix Stuck Page'}">
+                        🛠️ ${t('fix') || 'Fix'}
                     </button>
                 </div>
             `;
@@ -369,10 +368,16 @@ const Shifts = {
     },
 
     hardReset() {
-        if (confirm('هل أنت متأكد؟ سيتم إعادة تعيين حالة الورديات (لن يتم حذف السجل القديم).')) {
-            App.activeShiftId = null;
-            this.render();
-            Toast.show('success', 'تم إعادة التعيين', 'success');
-        }
+        Modal.show(t('warning'), t('confirm_reset_shifts') || 'Are you sure? This will reset local shift state.', `
+            <button class="btn btn-danger" onclick="Shifts.performHardReset()">${t('yes_reset') || 'Yes, Reset'}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+        `);
+    },
+
+    performHardReset() {
+        App.activeShiftId = null;
+        this.render();
+        Modal.hide();
+        Toast.show(t('success'), t('reset_done') || 'Reset done', 'success');
     }
 };

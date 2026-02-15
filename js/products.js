@@ -274,7 +274,8 @@ const Products = {
         `, { wide: true });
 
         // Init UI state
-        setTimeout(() => this.toggleStockFields(), 50);
+        // Initial call to set correct display based on current selection
+        this.toggleStockFields();
     },
 
     toggleStockFields() {
@@ -347,7 +348,8 @@ const Products = {
         const div = document.getElementById('url-input-container');
         div.style.display = div.style.display === 'none' ? 'block' : 'none';
         if (div.style.display === 'block') {
-            setTimeout(() => document.getElementById('img-url-input').focus(), 100);
+            const input = document.getElementById('img-url-input');
+            if (input) input.focus();
         }
     },
 
