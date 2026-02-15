@@ -48,50 +48,51 @@ const Auth = {
         const select = document.getElementById('login-username');
         if (!select) return;
 
-        // 1. Load from Local Cache immediately
-        const cached = localStorage.getItem('ares_users_cache');
-        if (cached) {
-            this.populateUserDropdown(JSON.parse(cached));
+        // 1. Gather Local Data (Cache + DB)
+        let availableUsers = [];
+
+        // Try DB first (most reliable local source)
+        if (typeof db !== 'undefined') {
+            const dbUsers = db.getCollection('users');
+            if (dbUsers && dbUsers.length > 0) availableUsers = dbUsers;
         }
 
-        // 2. Fetch from FireStore (if online)
+        // If DB empty, try explicit cache
+        if (availableUsers.length === 0) {
+            const cached = localStorage.getItem('ares_users_cache');
+            if (cached) availableUsers = JSON.parse(cached);
+        }
+
+        // 2. Emergency: If still empty, force Admin
+        if (availableUsers.length === 0) {
+            console.log("Auth: No users found. Creating default admin.");
+            const adminUser = { id: '1', name: 'مدير النظام', username: 'admin', password: '123', role: 'مدير', permissions: null, active: true };
+            availableUsers = [adminUser];
+            // Persist this fix
+            if (typeof db !== 'undefined') db.setCollection('users', availableUsers);
+        }
+
+        // 3. Render Immediately
+        this.populateUserDropdown(availableUsers);
+
+        // 4. Background Sync (If Cloud Available)
         if (window.dbFirestore && navigator.onLine) {
             try {
-                // Assuming single company / single collection for now based on v3.3 state
                 const snapshot = await window.dbFirestore.collection('users').get();
                 if (!snapshot.empty) {
-                    const users = snapshot.docs.map(d => d.data());
-                    // Filter active users only
-                    const activeUsers = users.filter(u => u.active !== false);
+                    const cloudUsers = snapshot.docs.map(d => d.data());
+                    const activeCloudUsers = cloudUsers.filter(u => u.active !== false);
 
-                    // Update Cache
-                    localStorage.setItem('ares_users_cache', JSON.stringify(activeUsers));
+                    // Update Cache & DB
+                    localStorage.setItem('ares_users_cache', JSON.stringify(activeCloudUsers));
+                    if (typeof db !== 'undefined') db.setCollection('users', activeCloudUsers);
 
-                    // Update Dropdown
-                    this.populateUserDropdown(activeUsers);
+                    // Re-render with fresh data
+                    this.populateUserDropdown(activeCloudUsers);
                     console.log('[Auth] Users refreshed from Cloud');
                 }
             } catch (e) {
-                console.warn('[Auth] Failed to fetch users from cloud:', e);
-            }
-        }
-
-        // 3. Fallback: Load from local DB (ares_pos_users)
-        if (select.options.length <= 1) {
-            const localUsers = db.getCollection('users');
-            if (localUsers.length > 0) {
-                this.populateUserDropdown(localUsers);
-            }
-        }
-
-        // 4. Emergency Fallback: If absolutely nothing exists
-        if (select.options.length <= 1) {
-            // Ensure at least Admin exists
-            if (select.options.length === 0 || select.value === "") {
-                const adminOpt = document.createElement('option');
-                adminOpt.value = 'admin';
-                adminOpt.textContent = 'admin (System)';
-                select.appendChild(adminOpt);
+                console.warn('[Auth] Background sync failed:', e);
             }
         }
     },
