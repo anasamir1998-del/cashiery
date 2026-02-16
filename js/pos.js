@@ -158,9 +158,9 @@ const POS = {
         `).join('');
     },
 
-    renderSummary() {
+    // Helper to calculate totals consistent everywhere
+    calculateTotals() {
         const vatRate = this.vatEnabled ? parseFloat(db.getSetting('vat_rate', '15')) / 100 : 0;
-
         let subtotal = 0;
         let vatAmount = 0;
 
@@ -191,6 +191,12 @@ const POS = {
         }
 
         const total = afterDiscount + vatAmount;
+
+        return { subtotal, discountAmount, afterDiscount, vatRate, vatAmount, total };
+    },
+
+    renderSummary() {
+        const { subtotal, discountAmount, vatRate, vatAmount, total } = this.calculateTotals();
 
         return `
             <div class="cart-summary-row">
@@ -416,12 +422,7 @@ const POS = {
             return;
         }
 
-        const subtotal = this.getSubtotal();
-        const discount = this.getDiscountAmount(subtotal);
-        const afterDiscount = subtotal - discount;
-        const vatRate = parseFloat(db.getSetting('vat_rate', '15')) / 100;
-        const vatAmount = afterDiscount * vatRate;
-        const total = afterDiscount + vatAmount;
+        const { total } = this.calculateTotals();
 
         Modal.show(`💳 ${t('checkout')}`, `
             <div class="glass-card p-20 mb-20" style="background: rgba(102,126,234,0.1); border-color: rgba(102,126,234,0.2); text-align: center;">
@@ -458,7 +459,7 @@ const POS = {
     },
 
     updateChange() {
-        const total = this.getTotal();
+        const { total } = this.calculateTotals();
         const paid = parseFloat(document.getElementById('cash-amount').value) || 0;
         const change = paid - total;
         const display = document.getElementById('change-display');
@@ -474,7 +475,7 @@ const POS = {
     toggleVAT(enabled) {
         this.vatEnabled = enabled;
         // Refresh Checkout Modal Total
-        const total = this.getTotal();
+        const { total } = this.calculateTotals();
         const display = document.querySelector('.glass-card .text-gradient');
         if (display) display.textContent = Utils.formatSAR(total);
 
@@ -489,22 +490,9 @@ const POS = {
         this.refreshCart();
     },
 
-    getTotal() {
-        const subtotal = this.getSubtotal();
-        const discount = this.getDiscountAmount(subtotal);
-        const afterDiscount = subtotal - discount;
-        const vatRate = this.vatEnabled ? parseFloat(db.getSetting('vat_rate', '15')) / 100 : 0;
-        const vatAmount = afterDiscount * vatRate;
-        return afterDiscount + vatAmount;
-    },
 
     completeSale() {
-        const subtotal = this.getSubtotal();
-        const discount = this.getDiscountAmount(subtotal);
-        const afterDiscount = subtotal - discount;
-        const vatRate = parseFloat(db.getSetting('vat_rate', '15')) / 100;
-        const vatAmount = afterDiscount * vatRate;
-        const total = afterDiscount + vatAmount;
+        const { subtotal, discountAmount, afterDiscount, vatRate, vatAmount, total } = this.calculateTotals();
         const paymentMethod = document.getElementById('payment-method').value;
         const customerId = document.getElementById('checkout-customer').value;
         const cashAmount = parseFloat(document.getElementById('cash-amount').value) || total;
@@ -566,7 +554,7 @@ const POS = {
                 total: item.price * item.qty
             })),
             subtotal,
-            discount,
+            discount: discountAmount,
             discountType: this.discountType,
             discountValue: this.discountValue,
             afterDiscount,
@@ -597,7 +585,6 @@ const POS = {
             }
         });
 
-        // Clear cart
         // Clear cart
         this.cart = [];
         this.discountValue = 0;
