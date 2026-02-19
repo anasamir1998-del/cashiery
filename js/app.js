@@ -46,12 +46,12 @@ const App = {
     /* ── Apply Branding (name + logo everywhere) ── */
     applyBranding() {
         // Apply immediately
-        if (window.Settings && Settings.applyShopName) {
+        if (typeof Settings !== 'undefined' && Settings.applyShopName) {
             Settings.applyShopName();
         }
         // Re-apply after a delay to catch Firestore sync overwrites
         setTimeout(() => {
-            if (window.Settings && Settings.applyShopName) {
+            if (typeof Settings !== 'undefined' && Settings.applyShopName) {
                 Settings.applyShopName();
             }
         }, 2000);
@@ -78,7 +78,7 @@ const App = {
 
             // Re-apply branding when settings change from cloud
             if (col === 'settings') {
-                if (window.Settings && Settings.applyShopName) {
+                if (typeof Settings !== 'undefined' && Settings.applyShopName) {
                     Settings.applyShopName();
                 }
             }

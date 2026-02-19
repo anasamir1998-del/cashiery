@@ -424,9 +424,6 @@ const Settings = {
         const companyName = document.getElementById('s-company-name').value.trim();
         const companyNameEn = document.getElementById('s-company-name-en').value.trim();
 
-        // TEMP DEBUG — remove after fix is confirmed
-        alert('DEBUG SAVE: name="' + companyName + '", nameEn="' + companyNameEn + '"');
-
         // Save to settings collection (for cloud sync)
         db.setSetting('company_name', companyName);
         db.setSetting('company_name_en', companyNameEn);
