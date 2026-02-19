@@ -30,7 +30,8 @@ const Settings = {
         const nameEn = localStorage.getItem('cashiery_brand_name_en') || db.getSetting('company_name_en', 'Pro');
         const logo = localStorage.getItem('cashiery_brand_logo') || db.getSetting('company_logo', '');
 
-        console.log('[applyShopName] name:', name, '| nameEn:', nameEn, '| logo:', logo ? '(has logo)' : '(no logo)');
+        // TEMP DEBUG — remove after fix is confirmed
+        console.log('[DEBUG applyShopName] name=' + name + ', nameEn=' + nameEn + ', logo=' + (logo ? 'YES' : 'NO'));
 
         // Update document title
         document.title = `${name} — ${nameEn}`;
@@ -422,6 +423,9 @@ const Settings = {
     saveCompany() {
         const companyName = document.getElementById('s-company-name').value.trim();
         const companyNameEn = document.getElementById('s-company-name-en').value.trim();
+
+        // TEMP DEBUG — remove after fix is confirmed
+        alert('DEBUG SAVE: name="' + companyName + '", nameEn="' + companyNameEn + '"');
 
         // Save to settings collection (for cloud sync)
         db.setSetting('company_name', companyName);
