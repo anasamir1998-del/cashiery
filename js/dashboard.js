@@ -139,7 +139,7 @@ const Dashboard = {
                 <div class="glass-card p-20">
                     <h3 style="margin-bottom: 16px; font-size: 16px;">⚡ ${t('quick_actions')}</h3>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        ${Auth.hasPermission('make_sale') ? `<button class="btn btn-primary" onclick="App.navigate('pos')">🛒 ${t('start_sale')}</button>` : ''}
+                        ${Auth.hasPermission('access_pos') ? `<button class="btn btn-primary" onclick="App.navigate('pos')">🛒 ${t('start_sale')}</button>` : ''}
                         ${Auth.hasPermission('manage_products') ? `<button class="btn btn-success" onclick="App.navigate('products')">📦 ${t('manage_products')}</button>` : ''}
                         ${Auth.hasPermission('view_reports') ? `<button class="btn btn-ghost" onclick="App.navigate('reports')">📊 ${t('view_reports')}</button>` : ''}
                         ${Auth.hasPermission('view_invoices') ? `<button class="btn btn-ghost" onclick="App.navigate('invoices')">🧾 ${t('view_invoices')}</button>` : ''}

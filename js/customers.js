@@ -43,7 +43,6 @@ const Customers = {
                                     <td style="font-family:Inter;">${c.vatNumber || '—'}</td>
                                     <td><span class="badge badge-accent">${purchases}</span></td>
                                     <td>
-                                    <td>
                                         ${Auth.hasPermission('manage_customers') ? `
                                         <button class="btn btn-ghost btn-sm" onclick="Customers.editCustomer('${c.id}')">✏️</button>
                                         <button class="btn btn-ghost btn-sm" onclick="Customers.deleteCustomer('${c.id}')">🗑️</button>

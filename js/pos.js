@@ -7,8 +7,6 @@ const POS = {
     selectedCategory: null,
     searchQuery: '',
     discountType: 'percent', // 'percent' or 'fixed'
-    searchQuery: '',
-    discountType: 'percent', // 'percent' or 'fixed'
     discountValue: 0,
     vatEnabled: true, // Default to true
     editingInvoice: null, // Track if we are editing an invoice
@@ -328,6 +326,8 @@ const POS = {
                 <select class="form-control" id="discount-type">
                     <option value="percent" ${this.discountType === 'percent' ? 'selected' : ''}>${t('discount_percent')}</option>
                     <option value="fixed" ${this.discountType === 'fixed' ? 'selected' : ''}>${t('discount_fixed')}</option>
+                </select>
+            </div>
             <div class="form-group">
                 <label>${t('discount_value')}</label>
                 <input type="number" class="form-control" id="discount-value" value="${this.discountValue}" min="0" step="0.01">

@@ -302,7 +302,6 @@ const App = {
         this.setupSidebar();
 
         // Update user info
-        // Update user info
         document.getElementById('user-avatar').textContent = Auth.getUserInitials ? Auth.getUserInitials() : (user.name[0] || 'U');
 
         let branchName = t('all_branches');

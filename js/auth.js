@@ -284,7 +284,7 @@ const Auth = {
             const admin = admins[0];
             this.login(admin.username, admin.password).then(res => {
                 if (res.success) {
-                    App.showDashboard();
+                    App.onLoginSuccess(admin);
                     if (typeof Toast !== 'undefined') Toast.show('🚀', 'تم الدخول السريع (Magic Login)', 'success');
                 }
             });

@@ -101,10 +101,9 @@ const Products = {
                 </td>
                 <td style="font-family:Inter; font-size:12px; color:var(--text-muted);">${p.barcode || '—'}</td>
                 <td>
-                    ${!p.showInPos === false ? '' : '<span class="badge badge-warning" style="font-size:10px;">👁️‍🗨️ Hidden</span>'}
+                    ${p.showInPos === false ? '<span class="badge badge-warning" style="font-size:10px;">👁️‍🗨️ Hidden</span>' : ''}
                     <span class="badge ${p.active !== false ? 'badge-success' : 'badge-danger'}">${p.active !== false ? t('active') : t('disabled')}</span>
                 </td>
-                <td>
                 <td>
                     ${Auth.hasPermission('manage_products') ? `
                     <button class="btn btn-ghost btn-sm" onclick="Products.showForm('${p.id}')">✏️</button>
