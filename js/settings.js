@@ -625,6 +625,7 @@ const Settings = {
 
     renderUserManagement() {
         const users = db.getCollection('users');
+        const branches = db.getCollection('branches') || [];
         return `
             <div class="flex items-center justify-between mb-20">
                 <h3>👥 ${t('user_management')}</h3>
@@ -637,23 +638,29 @@ const Settings = {
                             <th>${t('full_name')}</th>
                             <th>${t('username')}</th>
                             <th>${t('role')}</th>
+                            <th>🏢 ${t('branch')}</th>
                             <th>${t('status')}</th>
                             <th>${t('actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${users.map(u => `
+                        ${users.map(u => {
+            const userBranch = u.branchId ? branches.find(b => b.id === u.branchId) : null;
+            const branchLabel = userBranch ? userBranch.name : (u.role === 'مدير' ? t('all_branches') : t('not_assigned'));
+            return `
                                 <tr>
                                     <td><strong>${Utils.escapeHTML(u.name)}</strong></td>
                                     <td style="font-family:Inter;">${u.username}</td>
                                     <td><span class="badge ${u.role === 'مدير' ? 'badge-accent' : u.role === 'مشرف' ? 'badge-warning' : 'badge-info'}">${t('role_' + (u.role === 'مدير' ? 'admin' : u.role === 'مشرف' ? 'supervisor' : 'cashier'))}</span></td>
+                                    <td><span style="font-size:13px;">${branchLabel}</span></td>
                                     <td><span class="badge ${u.active !== false ? 'badge-success' : 'badge-danger'}">${u.active !== false ? t('active') : t('disabled')}</span></td>
                                     <td>
                                         <button class="btn btn-ghost btn-sm" onclick="Settings.editUser('${u.id}')" title="${t('edit')}">✏️</button>
                                         <button class="btn btn-ghost btn-sm" onclick="Settings.editPermissions('${u.id}')" title="${t('permissions')}">🔑</button>
                                         ${u.username !== 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="Settings.toggleUser('${u.id}')">${u.active !== false ? '🔒' : '🔓'}</button>` : ''}
                                     </td>
-                                </tr>`).join('')}
+                                </tr>`;
+        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -662,6 +669,7 @@ const Settings = {
 
     showAddUser(user = null) {
         const isEdit = !!user;
+        const branches = (db.getCollection('branches') || []).filter(b => b.active !== false);
         Modal.show(isEdit ? `✏️ ${t('edit_user')} ` : `➕ ${t('add_user')} `, `
     < div class="form-group" >
                 <label>${t('full_name')}</label>
@@ -677,16 +685,26 @@ const Settings = {
                     <input type="password" class="form-control" id="u-password" style="direction:ltr;">
                 </div>
             </div>
-            <div class="form-group">
-                <label>${t('role')}</label>
-                <select class="form-control" id="u-role">
-                    <option value="كاشير" ${user?.role === 'كاشير' ? 'selected' : ''}>${t('role_cashier')}</option>
-                    <option value="مشرف" ${user?.role === 'مشرف' ? 'selected' : ''}>${t('role_supervisor')}</option>
-                    <option value="مدير" ${user?.role === 'مدير' ? 'selected' : ''}>${t('role_admin')}</option>
-                </select>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>${t('role')}</label>
+                    <select class="form-control" id="u-role">
+                        <option value="كاشير" ${user?.role === 'كاشير' ? 'selected' : ''}>${t('role_cashier')}</option>
+                        <option value="مشرف" ${user?.role === 'مشرف' ? 'selected' : ''}>${t('role_supervisor')}</option>
+                        <option value="مدير" ${user?.role === 'مدير' ? 'selected' : ''}>${t('role_admin')}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>🏢 ${t('branch')}</label>
+                    <select class="form-control" id="u-branch">
+                        <option value="" ${!user?.branchId ? 'selected' : ''}>${t('all_branches')} (${t('role_admin')})</option>
+                        ${branches.map(b => `<option value="${b.id}" ${user?.branchId === b.id ? 'selected' : ''}>${b.name}</option>`).join('')}
+                    </select>
+                </div>
             </div>
             <div class="glass-card p-20" style="background:var(--info-bg); border-color:rgba(0,180,216,0.2);">
                 <p style="font-size:12px; color:var(--info);">💡 ${t('permissions_hint')}</p>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">🏢 ${t('branch_hint') || 'اختر الفرع الذي يعمل به هذا المستخدم. المدير يمكنه رؤية الكل.'}</p>
             </div>
 `, `
     < button class="btn btn-primary" onclick = "Settings.saveUser(${isEdit ? `'${user.id}'` : 'null'})" > ${isEdit ? t('save_changes') : t('add')}</button >
@@ -699,6 +717,7 @@ const Settings = {
         const username = document.getElementById('u-username').value.trim();
         const password = document.getElementById('u-password').value;
         const role = document.getElementById('u-role').value;
+        const branchId = document.getElementById('u-branch') ? document.getElementById('u-branch').value : '';
 
         if (!name || !username) {
             Toast.show(t('error'), t('enter_name_username'), 'error');
@@ -706,7 +725,7 @@ const Settings = {
         }
 
         if (id) {
-            const updates = { name, role };
+            const updates = { name, role, branchId: branchId || null };
             if (password) updates.password = password;
             // Reset permissions when role changes
             const oldUser = db.getById('users', id);
@@ -725,7 +744,7 @@ const Settings = {
                 Toast.show(t('error'), t('username_exists'), 'error');
                 return;
             }
-            db.insert('users', { name, username, password, role, active: true });
+            db.insert('users', { name, username, password, role, branchId: branchId || null, active: true });
             Toast.show(t('success'), t('user_added'), 'success');
         }
         Modal.hide();

@@ -62,6 +62,25 @@ const I18n = {
         topbar_mode: { ar: 'تم التبديل إلى الشريط العلوي', en: 'Switched to Top Bar', ur: 'ٹاپ بار پر تبدیل ہو گیا' },
         sidebar_mode: { ar: 'تم التبديل إلى القائمة الجانبية', en: 'Switched to Sidebar', ur: 'سائیڈ بار پر تبدیل ہو گیا' },
 
+        // ── Branch Management ───────────────────────────
+        branch: { ar: 'الفرع', en: 'Branch', ur: 'برانچ' },
+        all_branches: { ar: 'جميع الفروع', en: 'All Branches', ur: 'تمام برانچز' },
+        not_assigned: { ar: 'غير محدد', en: 'Not Assigned', ur: 'غیر مقرر' },
+        branch_hint: { ar: 'اختر الفرع الذي يعمل به هذا المستخدم. المدير يمكنه رؤية الكل.', en: 'Choose the branch for this user. Admins can see all.', ur: 'اس صارف کے لیے برانچ منتخب کریں۔ ایڈمن سب دیکھ سکتا ہے۔' },
+        branch_management: { ar: 'إدارة الفروع', en: 'Branch Management', ur: 'برانچ مینجمنٹ' },
+        add_branch: { ar: 'إضافة فرع', en: 'Add Branch', ur: 'برانچ شامل کریں' },
+        edit_branch: { ar: 'تعديل فرع', en: 'Edit Branch', ur: 'برانچ میں ترمیم' },
+        branch_name: { ar: 'اسم الفرع', en: 'Branch Name', ur: 'برانچ کا نام' },
+        branch_phone: { ar: 'هاتف الفرع', en: 'Branch Phone', ur: 'برانچ فون' },
+        branch_address: { ar: 'عنوان الفرع', en: 'Branch Address', ur: 'برانچ کا پتہ' },
+        main_branch: { ar: 'الفرع الرئيسي', en: 'Main Branch', ur: 'مین برانچ' },
+        branch_added: { ar: 'تم إضافة الفرع', en: 'Branch Added', ur: 'برانچ شامل ہو گئی' },
+        branch_updated: { ar: 'تم تحديث الفرع', en: 'Branch Updated', ur: 'برانچ اپ ڈیٹ ہو گئی' },
+        branch_deleted: { ar: 'تم حذف الفرع', en: 'Branch Deleted', ur: 'برانچ حذف ہو گئی' },
+        confirm_delete_branch: { ar: 'هل تريد حذف هذا الفرع؟', en: 'Delete this branch?', ur: 'کیا آپ یہ برانچ حذف کرنا چاہتے ہیں؟' },
+        enter_branch_name: { ar: 'أدخل اسم الفرع', en: 'Enter branch name', ur: 'برانچ کا نام درج کریں' },
+        branch_status_desc: { ar: 'تفعيل أو تعطيل الفرع', en: 'Enable or disable branch', ur: 'برانچ کو فعال یا غیر فعال کریں' },
+
         // ── Toast & Status Messages ────────────────────
         success: { ar: 'تم', en: 'Done', ur: 'ہو گیا' },
         error: { ar: 'خطأ', en: 'Error', ur: 'خرابی' },
