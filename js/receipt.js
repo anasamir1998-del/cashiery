@@ -11,12 +11,15 @@ const Receipt = {
         if (!sale) return;
 
         // Read settings dynamically every time
-        const shopName = db.getSetting('company_name', 'ARES Casher Pro');
+        const shopName = db.getSetting('company_name', 'Cashiery');
+        const shopNameEn = db.getSetting('company_name_en', 'Pro');
         const shopPhone = db.getSetting('company_phone', '');
         const shopAddress = db.getSetting('company_address', '');
         const vatNumber = db.getSetting('vat_number', '');
         const logo = db.getSetting('company_logo', '');
         const currency = db.getSetting('currency', 'ر.س');
+        const reviewLink = db.getSetting('review_link', '');
+        const socialLink = db.getSetting('social_link', '');
 
         // Invoice Customization Settings
         const getBool = (key) => db.getSetting(key, 'true') === 'true';
@@ -136,6 +139,9 @@ const Receipt = {
                         padding-top: 8px;
                     }
                     .footer p { margin-bottom: 2px; }
+                    .footer .social-icons { margin-top: 8px; font-size: 1.2em; letter-spacing: 5px; }
+                    .footer .qr-area { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
+                    .footer .qr-area span { font-size: 10px; margin-top: 4px; color: #444; }
                     @media print {
                         body { margin: 0; padding: ${bodyPadding}; width: ${paperWidth}; }
                     }
@@ -212,13 +218,35 @@ const Receipt = {
                 ${showFooter ? `
                 <div class="footer">
                     <p>${Utils.escapeHTML(footerText).replace(/\n/g, '<br>')}</p>
-                    <p>Powered by ARES Casher Pro</p>
+                    
+                    ${socialLink ? `<div class="social-icons">📱 WhatsApp/Social</div>` : ''}
+                    
+                    ${reviewLink ? `
+                    <div class="qr-area">
+                        <div id="review-qr"></div>
+                        <span>⭐ ${t('rate_us') || 'قيمنا على جوجل ماب'} ⭐</span>
+                    </div>` : ''}
+
+                    <p style="margin-top:10px; opacity:0.6;">Powered by Cashiery</p>
                 </div>` : ''}
 
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
                 <script>
                     window.onload = function() {
-                        window.print();
-                        setTimeout(function() { window.close(); }, 1000);
+                        ${reviewLink ? `
+                        new QRCode(document.getElementById("review-qr"), {
+                            text: "${reviewLink}",
+                            width: 80,
+                            height: 80,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });` : ''}
+
+                        setTimeout(function() {
+                            window.print();
+                            setTimeout(function() { window.close(); }, 1000);
+                        }, 500);
                     }
                 </script>
             </body>

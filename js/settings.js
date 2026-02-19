@@ -370,11 +370,24 @@ const Settings = {
                         <input type="text" class="form-control" id="s-cr-number" value="${db.getSetting('cr_number', '')}" style="direction:ltr;">
                     </div>
                 </div>
+                <div class="grid-2">
                     <div class="form-group">
                         <label>${t('phone')}</label>
                         <input type="text" class="form-control" id="s-phone" value="${db.getSetting('company_phone', '')}" style="direction:ltr;">
                     </div>
                 </div>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>🔗 ${t('google_maps_review') || 'رابط تقييم جوجل ماب'}</label>
+                        <input type="text" class="form-control" id="s-review-link" value="${db.getSetting('review_link', '')}" style="direction:ltr;" placeholder="https://g.page/r/...">
+                    </div>
+                    <div class="form-group">
+                        <label>📱 ${t('social_link') || 'رابط التواصل (واتساب/سوشيال)'}</label>
+                        <input type="text" class="form-control" id="s-social-link" value="${db.getSetting('social_link', '')}" style="direction:ltr;" placeholder="https://wa.me/...">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>${t('address')}</label>
                     <textarea class="form-control" id="s-address" rows="2">${db.getSetting('company_address', '')}</textarea>
@@ -424,6 +437,8 @@ const Settings = {
         db.setSetting('cr_number', document.getElementById('s-cr-number').value.trim());
         db.setSetting('company_address', document.getElementById('s-address').value.trim());
         db.setSetting('company_phone', document.getElementById('s-phone').value.trim());
+        db.setSetting('review_link', document.getElementById('s-review-link').value.trim());
+        db.setSetting('social_link', document.getElementById('s-social-link').value.trim());
         Toast.show(t('success'), t('company_saved'), 'success');
         // Refresh preview
         document.getElementById('settings-content').innerHTML = this.renderCompanySettings();
@@ -1043,30 +1058,30 @@ const Settings = {
         const pw = paperWidth === '58mm' ? '220px' : '300px';
 
         const sep = '<hr style="border:none;border-top:1px dashed #999;margin:6px 0;">';
-        const qrBlock = showQr ? `< div style = "text-align:${qrAlign};margin:6px 0;" > <div style="display:inline-block;width:80px;height:80px;border:2px solid #333;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#666;">QR Code</div></div > ` : '';
+        const qrBlock = showQr ? `<div style="text-align:${qrAlign};margin:6px 0;"><div style="display:inline-block;width:80px;height:80px;border:2px solid #333;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#666;">QR Code</div></div>` : '';
 
-        let html = `< div style = "font-size:${fs};max-width:${pw};margin:0 auto;line-height:1.5;" > `;
+        let html = `<div style="font-size:${fs};max-width:${pw};margin:0 auto;line-height:1.5;">`;
 
         // Header
         html += '<div style="text-align:center;">';
-        if (showLogo && logo) html += `< img src = "${logo}" style = "width:40px;height:40px;object-fit:contain;margin:0 auto 4px;display:block;border-radius:6px;" > `;
+        if (showLogo && logo) html += `<img src="${logo}" style="width:40px;height:40px;object-fit:contain;margin:0 auto 4px;display:block;border-radius:6px;">`;
         if (showLogo && !logo) html += '<div style="width:40px;height:40px;background:#eee;border-radius:6px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:18px;">🏢</div>';
-        if (showName) html += `< div style = "font-weight:800;font-size:1.1em;" > ${Utils.escapeHTML(companyName)}</div > `;
-        if (showName && companyNameEn) html += `< div style = "font-size:0.85em;color:#666;" > ${Utils.escapeHTML(companyNameEn)}</div > `;
-        if (showAddr && companyAddress) html += `< div style = "font-size:0.85em;color:#555;" > ${Utils.escapeHTML(companyAddress)}</div > `;
-        if (showPhone && companyPhone) html += `< div style = "font-size:0.85em;color:#555;" >📞 ${companyPhone}</div > `;
-        if (showVat && vatNumber) html += `< div style = "font-size:0.85em;color:#555;" > ${t('vat_number')}: ${vatNumber}</div > `;
+        if (showName) html += `<div style="font-weight:800;font-size:1.1em;">${Utils.escapeHTML(companyName)}</div>`;
+        if (showName && companyNameEn) html += `<div style="font-size:0.85em;color:#666;">${Utils.escapeHTML(companyNameEn)}</div>`;
+        if (showAddr && companyAddress) html += `<div style="font-size:0.85em;color:#555;">${Utils.escapeHTML(companyAddress)}</div>`;
+        if (showPhone && companyPhone) html += `<div style="font-size:0.85em;color:#555;">📞 ${companyPhone}</div>`;
+        if (showVat && vatNumber) html += `<div style="font-size:0.85em;color:#555;">${t('vat_number')}: ${vatNumber}</div>`;
         html += '</div>';
 
         html += sep;
-        html += `< div style = "text-align:center;font-weight:700;" > ${t('simplified_tax_invoice') || 'فاتورة ضريبية مبسطة'}</div > `;
+        html += `<div style="text-align:center;font-weight:700;">${t('simplified_tax_invoice') || 'فاتورة ضريبية مبسطة'}</div>`;
         html += sep;
 
         // Invoice info
-        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('invoice_number')}:</span><span style="font-weight:700;">INV-001</span></div > `;
-        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('date')}:</span><span>2026/02/14 12:00</span></div > `;
-        if (showCashier) html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('cashier')}:</span><span>أحمد</span></div > `;
-        if (showCustomer) html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('customer')}:</span><span>عميل عام</span></div > `;
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('invoice_number')}:</span><span style="font-weight:700;">INV-001</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('date')}:</span><span>2026/02/14 12:00</span></div>`;
+        if (showCashier) html += `<div style="display:flex;justify-content:space-between;"><span>${t('cashier')}:</span><span>أحمد</span></div>`;
+        if (showCustomer) html += `<div style="display:flex;justify-content:space-between;"><span>${t('customer')}:</span><span>عميل عام</span></div>`;
 
         // QR Top
         if (qrPos === 'top') html += qrBlock;
@@ -1074,27 +1089,27 @@ const Settings = {
         html += sep;
 
         // Items
-        html += `< div style = "display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;" >
+        html += `<div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;">
             <span style="width:40%;">${t('product') || 'المنتج'}</span>
             <span style="width:15%;text-align:center;">${t('qty') || 'الكمية'}</span>
             <span style="width:20%;text-align:left;">${t('price') || 'السعر'}</span>
             <span style="width:25%;text-align:left;">${t('total') || 'الإجمالي'}</span>
-        </div > `;
-        html += `< div style = "display:flex;justify-content:space-between;font-size:0.9em;" ><span style="width:40%;">قهوة عربية</span><span style="width:15%;text-align:center;">2</span><span style="width:20%;text-align:left;">15.00</span><span style="width:25%;text-align:left;font-weight:700;">30.00</span></div > `;
-        html += `< div style = "display:flex;justify-content:space-between;font-size:0.9em;" ><span style="width:40%;">كيك شوكولاتة</span><span style="width:15%;text-align:center;">1</span><span style="width:20%;text-align:left;">25.00</span><span style="width:25%;text-align:left;font-weight:700;">25.00</span></div > `;
+        </div>`;
+        html += `<div style="display:flex;justify-content:space-between;font-size:0.9em;"><span style="width:40%;">قهوة عربية</span><span style="width:15%;text-align:center;">2</span><span style="width:20%;text-align:left;">15.00</span><span style="width:25%;text-align:left;font-weight:700;">30.00</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;font-size:0.9em;"><span style="width:40%;">كيك شوكولاتة</span><span style="width:15%;text-align:center;">1</span><span style="width:20%;text-align:left;">25.00</span><span style="width:25%;text-align:left;font-weight:700;">25.00</span></div>`;
 
         html += sep;
 
         // Totals
-        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('subtotal')}:</span><span>55.00 ${currency}</span></div > `;
-        if (showDiscount) html += `< div style = "display:flex;justify-content:space-between;color:#c00;" ><span>${t('discount')}:</span><span>-5.00 ${currency}</span></div > `;
-        html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('vat')} (15%):</span><span>7.50 ${currency}</span></div > `;
-        html += `< div style = "display:flex;justify-content:space-between;font-weight:800;font-size:1.2em;border-top:2px solid #000;padding-top:4px;margin-top:4px;" ><span>${t('grand_total')}:</span><span>57.50 ${currency}</span></div > `;
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('subtotal')}:</span><span>55.00 ${currency}</span></div>`;
+        if (showDiscount) html += `<div style="display:flex;justify-content:space-between;color:#c00;"><span>${t('discount')}:</span><span>-5.00 ${currency}</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;"><span>${t('vat')} (15%):</span><span>7.50 ${currency}</span></div>`;
+        html += `<div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.2em;border-top:2px solid #000;padding-top:4px;margin-top:4px;"><span>${t('grand_total')}:</span><span>57.50 ${currency}</span></div>`;
 
-        if (showPayment) html += `< div style = "display:flex;justify-content:space-between;margin-top:4px;" ><span>${t('payment_method')}:</span><span>${t('cash_sales') || 'نقدي'}</span></div > `;
+        if (showPayment) html += `<div style="display:flex;justify-content:space-between;margin-top:4px;"><span>${t('payment_method')}:</span><span>${t('cash_sales') || 'نقدي'}</span></div>`;
         if (showPaidChange) {
-            html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('amount_paid') || 'المبلغ المدفوع'}:</span><span>60.00 ${currency}</span></div > `;
-            html += `< div style = "display:flex;justify-content:space-between;" ><span>${t('change') || 'الباقي'}:</span><span>2.50 ${currency}</span></div > `;
+            html += `<div style="display:flex;justify-content:space-between;"><span>${t('amount_paid') || 'المبلغ المدفوع'}:</span><span>60.00 ${currency}</span></div>`;
+            html += `<div style="display:flex;justify-content:space-between;"><span>${t('change') || 'الباقي'}:</span><span>2.50 ${currency}</span></div>`;
         }
 
         // QR Bottom
@@ -1103,8 +1118,8 @@ const Settings = {
         // Footer
         if (showFooter) {
             html += sep;
-            html += `< div style = "text-align:center;font-size:0.9em;color:#555;" > ${Utils.escapeHTML(footerText)}</div > `;
-            html += '<div style="text-align:center;font-size:0.8em;color:#999;margin-top:2px;">ARES Casher Pro</div>';
+            html += `<div style="text-align:center;font-size:0.9em;color:#555;">${Utils.escapeHTML(footerText).replace(/\n/g, '<br>')}</div>`;
+            html += '<div style="text-align:center;font-size:0.8em;color:#999;margin-top:2px;">Cashiery</div>';
         }
 
         html += '</div>';

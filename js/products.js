@@ -60,6 +60,7 @@ const Products = {
                                 <th>${t('product_name')}</th>
                                 <th>${t('category')}</th>
                                 <th>${t('unit_price')}</th>
+                                <th>${t('product_cost')}</th>
                                 <th>${t('stock')}</th>
                                 <th>${t('barcode')}</th>
                                 <th>${t('status')}</th>
@@ -94,6 +95,7 @@ const Products = {
                 </td>
                 <td>${cat ? `<span class="badge" style="background:${cat.color}22; color:${cat.color};">${cat.icon || ''} ${cat.name}</span>` : '—'}</td>
                 <td style="font-family:Inter; font-weight:600;">${Utils.formatSAR(p.price)}</td>
+                <td style="font-family:Inter; font-weight:600; color:var(--rp-danger);">${Utils.formatSAR(p.costPrice || 0)}</td>
                 <td>
                     <span class="badge ${isService ? 'badge-info' : (lowStock ? 'badge-danger' : 'badge-success')}">${isService ? '∞' : (p.stock !== undefined ? p.stock : 0)}</span>
                 </td>
@@ -213,18 +215,24 @@ const Products = {
                         <div class="form-group">
                             <label>${t('unit_price')} (${t('sar')}) *</label>
                             <input type="number" class="form-control" id="p-price" value="${product?.price || ''}" min="0" step="0.01" style="direction:ltr;">
-                            <label class="flex items-center gap-8 mt-8" style="cursor:pointer; user-select:none; font-size:12px;">
-                                <input type="checkbox" id="p-tax-included" ${product?.taxIncluded ? 'checked' : ''} style="width:16px; height:16px;">
-                                <span>${t('price_includes_tax') || 'السعر شامل الضريبة'}</span>
-                            </label>
                         </div>
                         <div class="form-group">
-                            <label>${t('category')}</label>
-                            <select class="form-control" id="p-category">
-                                <option value="">-- ${t('no_category')} --</option>
-                                ${categories.map(c => `<option value="${c.id}" ${product?.categoryId === c.id ? 'selected' : ''}>${c.icon || ''} ${c.name}</option>`).join('')}
-                            </select>
+                            <label>${t('product_cost')} (${t('sar')})</label>
+                            <input type="number" class="form-control" id="p-cost" value="${product?.costPrice || ''}" min="0" step="0.01" style="direction:ltr;">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="flex items-center gap-8 mt-8" style="cursor:pointer; user-select:none; font-size:12px;">
+                            <input type="checkbox" id="p-tax-included" ${product?.taxIncluded ? 'checked' : ''} style="width:16px; height:16px;">
+                            <span>${t('price_includes_tax') || 'السعر شامل الضريبة'}</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>${t('category')}</label>
+                        <select class="form-control" id="p-category">
+                            <option value="">-- ${t('no_category')} --</option>
+                            ${categories.map(c => `<option value="${c.id}" ${product?.categoryId === c.id ? 'selected' : ''}>${c.icon || ''} ${c.name}</option>`).join('')}
+                        </select>
                     </div>
                 </div>
             </div>
@@ -388,6 +396,7 @@ const Products = {
         const type = document.getElementById('p-type').value;
         const name = document.getElementById('p-name').value.trim();
         const price = parseFloat(document.getElementById('p-price').value);
+        const costPrice = parseFloat(document.getElementById('p-cost').value) || 0;
         const categoryId = document.getElementById('p-category').value;
         const stock = document.getElementById('p-stock').value ? parseInt(document.getElementById('p-stock').value) : 0;
         const minStock = parseInt(document.getElementById('p-min-stock').value) || 5;
@@ -405,7 +414,7 @@ const Products = {
 
         const productData = {
             name,
-            price, categoryId: categoryId || null, type,
+            price, costPrice, categoryId: categoryId || null, type,
             stock: type === 'service' ? 0 : stock,
             minStock: type === 'service' ? 0 : minStock,
             barcode, active, showInPos, notes, taxIncluded,

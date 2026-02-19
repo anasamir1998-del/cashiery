@@ -149,28 +149,30 @@ const Shifts = {
         const totalSales = shiftSales.reduce((sum, s) => sum + s.total, 0);
         const totalVAT = shiftSales.reduce((sum, s) => sum + s.vatAmount, 0);
         const cashTotal = shiftSales.filter(s => s.paymentMethod === 'نقدي').reduce((sum, s) => sum + s.total, 0);
+        const cardTotal = shiftSales.filter(s => s.paymentMethod === 'بطاقة').reduce((sum, s) => sum + s.total, 0);
+        const transferTotal = shiftSales.filter(s => s.paymentMethod === 'تحويل').reduce((sum, s) => sum + s.total, 0);
 
         return `
-            <div class="stat-cards mb-24">
+            <div class="stat-cards mb-24" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                 <div class="glass-card stat-card accent">
                     <div class="stat-card-icon">💰</div>
                     <h3>${Utils.formatCurrency(totalSales)}</h3>
-                    <p>${t('shift_sales')} (${t('sar')})</p>
+                    <p>${t('shift_sales')}</p>
                 </div>
                 <div class="glass-card stat-card success">
-                    <div class="stat-card-icon">🧾</div>
-                    <h3>${shiftSales.length}</h3>
-                    <p>${t('operations_count')}</p>
-                </div>
-                <div class="glass-card stat-card warning">
                     <div class="stat-card-icon">💵</div>
                     <h3>${Utils.formatCurrency(cashTotal)}</h3>
-                    <p>${t('cash_sales')} (${t('sar')})</p>
+                    <p>${t('cash_sales')}</p>
                 </div>
                 <div class="glass-card stat-card info">
+                    <div class="stat-card-icon">💳</div>
+                    <h3>${Utils.formatCurrency(cardTotal)}</h3>
+                    <p>${t('card_sales')}</p>
+                </div>
+                <div class="glass-card stat-card warning">
                     <div class="stat-card-icon">🏦</div>
-                    <h3>${Utils.formatCurrency(totalVAT)}</h3>
-                    <p>${t('vat_collected')} (${t('sar')})</p>
+                    <h3>${Utils.formatCurrency(transferTotal)}</h3>
+                    <p>${t('transfer_sales')}</p>
                 </div>
             </div>
         `;
@@ -238,29 +240,52 @@ const Shifts = {
         const shiftSales = db.query('sales', s => s.shiftId === App.activeShiftId);
         const totalSales = shiftSales.reduce((sum, s) => sum + s.total, 0);
         const cashSales = shiftSales.filter(s => s.paymentMethod === 'نقدي').reduce((sum, s) => sum + s.total, 0);
+        const cardSales = shiftSales.filter(s => s.paymentMethod === 'بطاقة').reduce((sum, s) => sum + s.total, 0);
+        const transferSales = shiftSales.filter(s => s.paymentMethod === 'تحويل').reduce((sum, s) => sum + s.total, 0);
+
         const activeShift = db.getById('shifts', App.activeShiftId);
         const expectedCash = (activeShift?.openingCash || 0) + cashSales;
 
         Modal.show(`🔒 ${t('close_shift')}`, `
-            <div class="glass-card p-20 mb-20" style="text-align:center;">
+            <div class="glass-card p-20 mb-20" style="text-align:center; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(0, 0, 0, 0.2));">
                 <div style="font-size:14px; color:var(--text-muted); margin-bottom:8px;">${t('shift_total_sales')}</div>
                 <div style="font-size:32px; font-weight:800; font-family:Inter;" class="text-gradient">${Utils.formatSAR(totalSales)}</div>
             </div>
             
-            <div class="form-group">
-                <label>${t('cash_in_drawer')} (${t('sar')})</label>
-                <input type="number" class="form-control" id="closing-cash" value="${expectedCash.toFixed(2)}" step="0.01">
-                <small style="color:var(--text-muted); font-size:12px;">${t('expected_amount')}: ${Utils.formatSAR(expectedCash)}</small>
+            <div class="form-group mb-20">
+                <label style="font-weight:700;">${t('cash_in_drawer')} (${t('sar')})</label>
+                <input type="number" class="form-control" id="closing-cash" value="${expectedCash.toFixed(2)}" step="0.01" style="font-size:1.2em; font-weight:800; text-align:center;">
+                <div class="flex justify-between mt-8">
+                    <small style="color:var(--text-muted);">${t('expected_amount')}:</small>
+                    <small style="font-weight:600;">${Utils.formatSAR(expectedCash)}</small>
+                </div>
             </div>
 
-            <div class="glass-card p-20" style="background: var(--bg-glass);">
-                <div class="flex justify-between" style="margin-bottom:8px;"><span>${t('operations_count')}</span><span style="font-weight:600;">${shiftSales.length}</span></div>
-                <div class="flex justify-between" style="margin-bottom:8px;"><span>${t('cash_sales')}</span><span style="font-weight:600;">${Utils.formatSAR(cashSales)}</span></div>
-                <div class="flex justify-between"><span>${t('opening_cash')}</span><span style="font-weight:600;">${Utils.formatSAR(activeShift?.openingCash || 0)}</span></div>
+            <div class="glass-card p-20" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                <div class="flex justify-between" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span class="text-muted"><span style="margin-right:8px;">💳</span>${t('card_sales')}</span>
+                    <span style="font-weight:700;">${Utils.formatSAR(cardSales)}</span>
+                </div>
+                <div class="flex justify-between" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span class="text-muted"><span style="margin-right:8px;">🏦</span>${t('transfer_sales')}</span>
+                    <span style="font-weight:700;">${Utils.formatSAR(transferSales)}</span>
+                </div>
+                <div class="flex justify-between" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span class="text-muted"><span style="margin-right:8px;">💵</span>${t('cash_sales')}</span>
+                    <span style="font-weight:700;">${Utils.formatSAR(cashSales)}</span>
+                </div>
+                <div class="flex justify-between" style="padding: 10px 0;">
+                    <span class="text-muted"><span style="margin-right:8px;">📂</span>${t('opening_cash')}</span>
+                    <span style="font-weight:700;">${Utils.formatSAR(activeShift?.openingCash || 0)}</span>
+                </div>
+            </div>
+            
+            <div class="mt-20 p-16 rounded-8" style="background:rgba(255,193,7,0.1); border:1px solid rgba(255,193,7,0.2); font-size:12px;">
+                ⚠️ ${t('confirm_close_warning') || 'يرجى التأكد من المبالغ قبل الإغلاق، لا يمكن التراجع عن هذه العملية.'}
             </div>
         `, `
-            <button class="btn btn-danger" onclick="Shifts.confirmClose()">🔒 ${t('confirm_close')}</button>
-            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+            <button class="btn btn-danger btn-block" onclick="Shifts.confirmClose()">🔒 ${t('confirm_close')}</button>
+            <button class="btn btn-ghost btn-block" onclick="Modal.hide()">${t('cancel')}</button>
         `);
     },
 
