@@ -412,7 +412,7 @@ const Dashboard = {
             const totalAllTime = branchSalesAll.reduce((sum, s) => sum + (s.total || 0), 0);
 
             return `
-                <div class="glass-card p-20" style="border-right: 4px solid ${color}; min-width: 260px;">
+                <div class="glass-card p-20" style="border-right: 4px solid ${color}; min-width: 260px; cursor:pointer; transition: transform 0.15s;" onclick="Dashboard.showBranchDetails('${branch.id}')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                         <h4 style="font-size:15px; font-weight:700;">🏪 ${Utils.escapeHTML(branch.name)}</h4>
                         ${branch.isMain ? '<span class="badge badge-accent" style="font-size:10px;">' + t('main') + '</span>' : ''}
@@ -445,5 +445,109 @@ const Dashboard = {
                 </div>
             </div>
         `;
+    },
+
+    /* ── Branch Details Modal ── */
+    showBranchDetails(branchId) {
+        const branch = (db.getCollection('branches') || []).find(b => b.id === branchId);
+        if (!branch) return;
+
+        const allSales = db.getCollection('sales') || [];
+        const allPurchases = db.getCollection('purchases') || [];
+
+        const branchSales = allSales.filter(s => s.branchId === branchId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const branchPurchases = allPurchases.filter(p => p.branchId === branchId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const totalSalesAmount = branchSales.reduce((sum, s) => sum + (s.total || 0), 0);
+        const totalPurchasesAmount = branchPurchases.reduce((sum, p) => sum + (p.totalCost || p.total || 0), 0);
+        const totalVAT = branchSales.reduce((sum, s) => sum + (s.vatAmount || 0), 0);
+
+        // Sales Table (last 20)
+        const salesRows = branchSales.slice(0, 20).map(s => `
+            <tr>
+                <td style="font-family:Inter; font-weight:600;">${s.invoiceNumber || '—'}</td>
+                <td style="font-size:12px;">${Utils.formatDateTime(s.createdAt)}</td>
+                <td>${s.cashierName ? Utils.escapeHTML(s.cashierName) : '—'}</td>
+                <td>${s.customerName ? Utils.escapeHTML(s.customerName) : '<span style="color:var(--text-muted)">' + t('cash_customer') + '</span>'}</td>
+                <td style="font-family:Inter; font-weight:700;">${Utils.formatSAR(s.total)}</td>
+                <td><span class="badge ${s.paymentMethod === 'نقدي' ? 'badge-success' : s.paymentMethod === 'بطاقة' ? 'badge-accent' : 'badge-warning'}">${s.paymentMethod || t('cash_sales')}</span></td>
+            </tr>
+        `).join('');
+
+        // Purchases Table (last 20)
+        const purchasesRows = branchPurchases.slice(0, 20).map(p => `
+            <tr>
+                <td style="font-family:Inter; font-weight:600;">${p.invoiceNumber || p.id?.slice(0, 8) || '—'}</td>
+                <td style="font-size:12px;">${Utils.formatDateTime(p.createdAt)}</td>
+                <td>${p.supplierName ? Utils.escapeHTML(p.supplierName) : '—'}</td>
+                <td style="font-family:Inter; font-weight:700;">${Utils.formatSAR(p.totalCost || p.total || 0)}</td>
+                <td>${(p.items || []).length} ${t('items_count')}</td>
+            </tr>
+        `).join('');
+
+        const html = `
+            <div style="max-height:70vh; overflow-y:auto;">
+                <!-- Summary Stats -->
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:20px;">
+                    <div style="background:var(--bg-glass); border-radius:var(--radius-sm); padding:14px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">💰 ${t('total_sales')}</div>
+                        <div style="font-size:18px; font-weight:800; font-family:Inter; color:#667eea;">${Utils.formatCurrency(totalSalesAmount)}</div>
+                    </div>
+                    <div style="background:var(--bg-glass); border-radius:var(--radius-sm); padding:14px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">🏦 ${t('vat_collected')}</div>
+                        <div style="font-size:18px; font-weight:800; font-family:Inter; color:#ffaa00;">${Utils.formatCurrency(totalVAT)}</div>
+                    </div>
+                    <div style="background:var(--bg-glass); border-radius:var(--radius-sm); padding:14px; text-align:center;">
+                        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">📦 ${t('purchases') || 'المشتريات'}</div>
+                        <div style="font-size:18px; font-weight:800; font-family:Inter; color:#ff6b81;">${Utils.formatCurrency(totalPurchasesAmount)}</div>
+                    </div>
+                </div>
+
+                <!-- Sales Table -->
+                <h4 style="margin-bottom:10px; font-size:14px;">🧾 ${t('all_invoices')} (${branchSales.length})</h4>
+                ${branchSales.length > 0 ? `
+                <div style="overflow-x:auto; margin-bottom:20px;">
+                    <table class="data-table" style="font-size:13px;">
+                        <thead>
+                            <tr>
+                                <th>${t('invoice_number')}</th>
+                                <th>${t('date')}</th>
+                                <th>${t('cashier')}</th>
+                                <th>${t('customer')}</th>
+                                <th>${t('total')}</th>
+                                <th>${t('payment_method')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>${salesRows}</tbody>
+                    </table>
+                </div>
+                ${branchSales.length > 20 ? '<p style="font-size:12px; color:var(--text-muted); text-align:center;">... ' + t('showing') + ' 20 ' + t('of') + ' ' + branchSales.length + '</p>' : ''}
+                ` : '<div class="empty-state" style="padding:20px;"><p style="color:var(--text-muted);">' + t('no_sales_yet') + '</p></div>'}
+
+                <!-- Purchases Table -->
+                <h4 style="margin-bottom:10px; font-size:14px;">📦 ${t('purchases') || 'المشتريات'} (${branchPurchases.length})</h4>
+                ${branchPurchases.length > 0 ? `
+                <div style="overflow-x:auto;">
+                    <table class="data-table" style="font-size:13px;">
+                        <thead>
+                            <tr>
+                                <th>${t('invoice_number')}</th>
+                                <th>${t('date')}</th>
+                                <th>${t('supplier') || 'المورد'}</th>
+                                <th>${t('total')}</th>
+                                <th>${t('items_count')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>${purchasesRows}</tbody>
+                    </table>
+                </div>
+                ${branchPurchases.length > 20 ? '<p style="font-size:12px; color:var(--text-muted); text-align:center;">... ' + t('showing') + ' 20 ' + t('of') + ' ' + branchPurchases.length + '</p>' : ''}
+                ` : '<div class="empty-state" style="padding:20px;"><p style="color:var(--text-muted);">' + (t('no_purchases') || 'لا توجد مشتريات') + '</p></div>'}
+            </div>
+        `;
+
+        Modal.show(`🏪 ${Utils.escapeHTML(branch.name)}`, html, `
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('close') || 'إغلاق'}</button>
+        `, { wide: true });
     }
 };
