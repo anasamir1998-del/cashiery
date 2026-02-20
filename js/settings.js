@@ -1293,6 +1293,12 @@ const Settings = {
 
                 <div class="glass-card p-20 mt-20" style="background: rgba(220, 53, 69, 0.1); border-color: var(--danger);">
                     <h4 style="margin-bottom:8px; color: var(--danger);">⚠️ ${t('danger_zone') || 'Danger Zone'}</h4>
+                    
+                    <div style="margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:16px;">
+                        <p style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${t('clear_transactions_desc') || 'Delete Sales, Purchases, and Shifts. Keep Products & Customers.'}</p>
+                        <button class="btn btn-warning" onclick="Settings.clearCloudTransactions()">🧹 ${t('clear_transactions') || 'Clear Transactions'}</button>
+                    </div>
+
                     <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">${t('clear_cloud_desc') || 'Delete ALL data from the cloud database. Attempt to fix sync issues.'}</p>
                     <button class="btn btn-danger" onclick="Settings.clearCloudData()">🗑️ ${t('clear_cloud_data') || 'Reset Cloud Data'}</button>
                 </div>
@@ -1400,6 +1406,25 @@ const Settings = {
         } catch (e) {
             console.error(e);
             Toast.show('error', 'Failed to clear cloud data: ' + e.message, 'error');
+        }
+    },
+
+    async clearCloudTransactions() {
+        Modal.show(t('warning'), t('confirm_clear_txn') || 'Are you sure? This will delete all Sales, Purchases, and Shifts from the cloud. Products and Customers will be kept.', `
+            <button class="btn btn-warning" onclick="Settings.performClearTransactions()">${t('yes_clear') || 'Yes, Clear Transactions'}</button>
+            <button class="btn btn-ghost" onclick="Modal.hide()">${t('cancel')}</button>
+        `);
+    },
+
+    async performClearTransactions() {
+        Modal.hide();
+        Toast.show('info', 'Clearing Transactions...', 'info');
+        try {
+            await db.clearCloudTransactions();
+            Toast.show('success', 'Transactions cleared successfully!', 'success');
+        } catch (e) {
+            console.error(e);
+            Toast.show('error', 'Failed to clear transactions: ' + e.message, 'error');
         }
     }
 };

@@ -641,6 +641,11 @@ const I18n = {
         test_connection: { ar: 'اختبار الاتصال', en: 'Test Connection', ur: 'کنکشن ٹیسٹ' },
         connection_success: { ar: 'تم الاتصال بنجاح', en: 'Connected successfully', ur: 'کامیابی سے منسلک' },
         connection_failed: { ar: 'فشل الاتصال', en: 'Connection failed', ur: 'کنکشن ناکام' },
+        clear_transactions_only: { ar: 'مسح الحركات فقط', en: 'Clear Transactions Only', ur: 'صرف ٹرانزیکشنز صاف کریں' },
+        clear_transactions: { ar: 'مسح الحركات', en: 'Clear Transactions', ur: 'ٹرانزیکشنز صاف' },
+        clear_transactions_desc: { ar: 'حذف المبيعات والمشتريات والورديات فقط (مع الاحتفاظ بالمنتجات والعملاء)', en: 'Delete Sales, Purchases, Shifts (Keep Products/Customers)', ur: 'فروخت، خریداری، اور شفٹوں کو حذف کریں (مصنوعات/گاہکوں کو رکھیں)' },
+        confirm_clear_txn: { ar: 'هل أنت متأكد؟ سيتم حذف جميع المبيعات والمشتريات والورديات من السحابة. المنتجات والعملاء لن يتم حذفهم.', en: 'Are you sure? Deletes Sales/Purchases/Shifts from cloud. Keeps Products/Customers.', ur: 'کیا آپ کو یقین ہے؟ کلاؤڈ سے تمام فروخت/خریداری/شفٹ حذف ہو جائیں گی۔' },
+        yes_clear: { ar: 'نعم، امسح الحركات', en: 'Yes, Clear Transactions', ur: 'ہاں، ٹرانزیکشنز صاف کریں' },
     },
 
     init() {

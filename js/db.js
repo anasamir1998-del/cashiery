@@ -10,7 +10,7 @@ class Database {
         // Start Firestore Sync if available
         if (window.dbFirestore) {
             console.log("Starting Firestore Sync...");
-            this.syncCollections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases'];
+            this.syncCollections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
 
             // Initial checks
             this.checkMigration();
@@ -45,7 +45,7 @@ class Database {
 
     // Download everything from Firestore
     async downloadAllFromCloud() {
-        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases'];
+        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
         for (const col of collections) {
             const snapshot = await window.dbFirestore.collection(col).get();
             const data = snapshot.docs.map(doc => doc.data());
@@ -59,7 +59,7 @@ class Database {
 
     // Upload everything to Firestore
     async uploadAllToCloud() {
-        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases'];
+        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
         for (const colName of collections) {
             const data = this.getCollection(colName);
             const batch = window.dbFirestore.batch();
@@ -82,7 +82,25 @@ class Database {
 
     // Clear all data from Firestore (Dangerous!)
     async clearCloudData() {
-        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases'];
+        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
+        for (const colName of collections) {
+            const snapshot = await window.dbFirestore.collection(colName).get();
+            const batch = window.dbFirestore.batch();
+            let count = 0;
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+                count++;
+            });
+            if (count > 0) {
+                await batch.commit();
+                console.log(`Cleared ${count} items from ${colName}`);
+            }
+        }
+    }
+
+    // Clear ONLY Transactions (Sales, Purchases, Shifts) - Keep Master Data safe
+    async clearCloudTransactions() {
+        const collections = ['sales', 'purchases', 'shifts'];
         for (const colName of collections) {
             const snapshot = await window.dbFirestore.collection(colName).get();
             const batch = window.dbFirestore.batch();
