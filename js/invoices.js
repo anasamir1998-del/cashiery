@@ -31,7 +31,7 @@ const Invoices = {
                 <!-- Search & Filter -->
                 <div class="flex gap-12 mb-20">
                     <input type="text" class="form-control" style="flex:1;" placeholder="🔍 ${t('search_invoice')}" oninput="Invoices.filter(this.value)" id="inv-search">
-                    <input type="date" class="form-control" style="width:180px; background-color:var(--element-bg);" id="inv-date" onchange="Invoices.filterByDate(this.value)">
+                    <input type="date" class="form-control" style="width:180px; background-color:var(--element-bg); direction:ltr; text-align:right; font-family:Inter, sans-serif;" id="inv-date" onchange="Invoices.filterByDate(this.value)">
                 </div>
 
                 <div class="glass-card" style="overflow:hidden;">
