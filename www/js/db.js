@@ -47,10 +47,13 @@ class Database {
     async downloadAllFromCloud() {
         const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
         for (const col of collections) {
-            const snapshot = await window.dbFirestore.collection(col).get();
-            const data = snapshot.docs.map(doc => doc.data());
-            if (data.length > 0) {
+            try {
+                const snapshot = await window.dbFirestore.collection(col).get();
+                const data = snapshot.docs.map(doc => doc.data());
+                // Always set collection to match cloud (even if empty)
                 this.setCollection(col, data, true);
+            } catch (e) {
+                console.error(`Error downloading ${col}:`, e);
             }
         }
         console.log("Download complete");

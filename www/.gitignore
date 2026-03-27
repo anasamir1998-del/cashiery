@@ -1,0 +1,13 @@
+# Assets/Media
+product_images/
+*.jpg
+*.png
+*.webp
+
+# Database (Data is stored in localStorage, but exclude any temp DB files)
+*.db
+*.sqlite
+
+# OS Files
+.DS_Store
+Thumbs.db

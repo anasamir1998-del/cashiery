@@ -1,13 +1,7 @@
-# Assets/Media
-product_images/
-*.jpg
-*.png
-*.webp
-
-# Database (Data is stored in localStorage, but exclude any temp DB files)
-*.db
-*.sqlite
-
-# OS Files
+node_modules/
+.idea/
+.vscode/
+*.log
 .DS_Store
 Thumbs.db
+capacitor.config.json.bak
