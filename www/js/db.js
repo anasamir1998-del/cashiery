@@ -5,41 +5,75 @@
 class Database {
     constructor() {
         this.prefix = 'ares_pos_';
-        this.initDefaults();
-
+        
         // Start Firestore Sync if available
         if (window.dbFirestore) {
-            console.log("Starting Firestore Sync...");
+            console.log("[DB] Starting Firestore Sync...");
             this.syncCollections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
 
-            // Initial checks
-            this.checkMigration();
+            // Perform automatic initial sync
+            this.initialSync();
             this.startListeners();
+        } else {
+            console.log("[DB] No Cloud Provider. Using Local Mode.");
+            this.initDefaults();
         }
     }
 
     // ─── FIRESTORE INTEGRATION ──────────────────────────────────
 
-    // Check if we need to upload local data to cloud (First run)
-    async checkMigration() {
+    async initialSync() {
+        const syncDone = localStorage.getItem(this.prefix + 'initial_sync_done') === 'true';
+        
         try {
-            const settingsRef = window.dbFirestore.collection('settings');
-            const snapshot = await settingsRef.limit(1).get();
+            // Priority 1: Check if Cloud has data (using products as indicator)
+            const productsRef = window.dbFirestore.collection('products');
+            const snapshot = await productsRef.limit(1).get();
 
-            // Case 1: Cloud is empty, Local has data -> Upload to Cloud
-            if (snapshot.empty && this.getCollection('products').length > 0) {
-                console.log("Firestore is empty. Uploading local data...");
-                await this.uploadAllToCloud();
-                if (typeof Toast !== 'undefined') Toast.show('☁️', 'تم رفع البيانات للسحابة بنجاح', 'success');
+            if (!snapshot.empty) {
+                console.log("[DB] Cloud data found. Prioritizing Cloud...");
+                // Force a one-time clean download to ensure consistency
+                if (!syncDone) {
+                    await this.downloadAllFromCloud();
+                    localStorage.setItem(this.prefix + 'initial_sync_done', 'true');
+                }
+            } else {
+                console.log("[DB] Cloud is empty.");
+                // Priority 2: If Local has data, upload it as master
+                if (this.getCollection('products').length > 0) {
+                    console.log("[DB] Local data found. Uploading to Cloud...");
+                    await this.uploadAllToCloud();
+                    localStorage.setItem(this.prefix + 'initial_sync_done', 'true');
+                } else {
+                    // Priority 3: Both empty -> Initialize Defaults
+                    console.log("[DB] No data anywhere. Initializing defaults...");
+                    this.initDefaults();
+                    await this.uploadAllToCloud();
+                    localStorage.setItem(this.prefix + 'initial_sync_done', 'true');
+                }
             }
-            // Case 2: Local is mostly empty, Cloud has data -> Download from Cloud
-            else if (!snapshot.empty && this.getCollection('products').length === 0) {
-                console.log("Local is empty. Downloading from Cloud...");
-                if (typeof Toast !== 'undefined') Toast.show('☁️', 'جاري تحميل البيانات من السحابة...', 'info');
-                await this.downloadAllFromCloud();
-            }
+            
+            // Final step: Ensure any local items missing from cloud are pushed (for offline catch-up)
+            this.syncLocalToCloud();
         } catch (e) {
-            console.error("Migration check failed:", e);
+            console.error("[DB] Initial sync failed:", e);
+            this.initDefaults(); // Fallback to local defaults if cloud check fails
+        }
+    }
+
+    async syncLocalToCloud() {
+        if (!window.dbFirestore) return;
+        console.log("[DB] Catching up local changes...");
+        const collections = ['products', 'categories', 'customers', 'users', 'settings', 'shifts', 'purchases', 'sales'];
+        
+        for (const col of collections) {
+            const local = this.getCollection(col);
+            // We don't want to loop hundreds of items every start, 
+            // but for small POS it's fine. In a bigger app we'd track "dirty" flags.
+            local.forEach(item => {
+                // cloudSave handles it via .set({merge: true})
+                this.cloudSave(col, item);
+            });
         }
     }
 
@@ -393,6 +427,7 @@ class Database {
             this.setSetting('_initialized', 'true');
         }
 
+        // Only add collections if they are totally missing OR cloud is not available
         if (this.getCollection('products').length === 0) {
             const cats = this.getCollection('categories');
             // Only add samples if we really are starting fresh
