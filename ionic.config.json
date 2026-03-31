@@ -1,0 +1,7 @@
+{
+  "name": "cashiery",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom"
+}
