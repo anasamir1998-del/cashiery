@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "appId": "ed1d0139",
+      "root": "./",
+      "iosPath": "ios/App",
+      "androidPath": "android"
+    }
+  ]
+}
